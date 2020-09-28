@@ -108,7 +108,7 @@ def getFactory(
     # Run the performance test suite.
     perf_command = [
         "python",
-        "%(workdir)s/lld-benchmark.py",
+        "%(builddir)s/lld-benchmark.py",
         "--machine=%(slavename)s",
         "--revision=%(got_revision)s",
         "--linker=./ld.lld",
