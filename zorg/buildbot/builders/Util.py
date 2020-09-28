@@ -1,4 +1,6 @@
-import buildbot.status.results
+# TODO: Remove all not actually used code.
+
+from buildbot.process.results import SUCCESS
 import re
 
 def getVisualStudioEnvironment(vs=None, target_arch=None):
@@ -32,14 +34,15 @@ def getVisualStudioEnvironment(vs=None, target_arch=None):
     vcvars_command = "%s %s && set" % (vcvars_command, arch_arg)
     return vcvars_command
 
-def extractSlaveEnvironment(exit_status, stdout, stderr):
-    '''Helper function for SetPropertyCommand. Loads Slave Environment
-    into a dictionary, and returns slave_env property for ShellCommands.'''
+def extractVSEnvironment(exit_status, stdout, stderr):
+    '''Helper function for SetPropertyCommand.
+    Loads Visual Studio Environment into a dictionary,
+    and returns vs_env property for ShellCommands.'''
     if exit_status:
         return {}
-    slave_env_dict = dict(l.strip().split('=',1)
+    vs_env_dict = dict(l.strip().split('=',1)
         for l in stdout.split('\n') if len(l.split('=', 1)) == 2)
-    return {'slave_env': slave_env_dict}
+    return {'vs_env': vs_env_dict}
 
 def extractClangVersion(exit_status, stdout, stderr):
     '''Helper function for SetPropertyCommand. Receives "clang --version" output
@@ -60,7 +63,7 @@ def getConfigArgs(origname):
   elif name.startswith('Debug'):
     name = name[len('Debug'):]
   else:
-    raise ValueError,'Unknown config name: %r' % origname
+    raise ValueError('Unknown config name: %r' % origname)
 
   if name.startswith('+Asserts'):
     name = name[len('+Asserts'):]
@@ -76,7 +79,7 @@ def getConfigArgs(origname):
     args.append('--enable-expensive-checks')
 
   if name:
-    raise ValueError,'Unknown config name: %r' % origname
+    raise ValueError('Unknown config name: %r' % origname)
 
   return args
 
@@ -87,16 +90,15 @@ def _did_last_build_fail(buildstep):
   # directory *SHOULD* be clean. So dont clean.
   if build_number == 0:
     return False
-  
+
   # Lookup the status of the last build from the master.
   builder = buildstep.build.builder
   previous_build = builder.master.status.getBuilder(builder.name)\
                                         .getLastFinishedBuild()
-  
+
   # If the previous build is None, do a clean build.
   if previous_build is None:
     return True
-  
-  # If the previous builder did not succeed, do a clean build.
-  return previous_build.getResults() != buildbot.status.results.SUCCESS
 
+  # If the previous builder did not succeed, do a clean build.
+  return previous_build.getResults() != SUCCESS
