@@ -1,3 +1,5 @@
+# TODO: Replace category to tags
+
 from buildbot.process.properties import WithProperties
 
 from zorg.buildbot.builders import ClangBuilder
@@ -10,16 +12,203 @@ from zorg.buildbot.builders import SphinxDocsBuilder
 from zorg.buildbot.builders import ABITestsuitBuilder
 from zorg.buildbot.builders import ClangLTOBuilder
 from zorg.buildbot.builders import UnifiedTreeBuilder
-from zorg.buildbot.builders import CUDATestsuiteBuilder
 from zorg.buildbot.builders import AOSPBuilder
 from zorg.buildbot.builders import AnnotatedBuilder
 from zorg.buildbot.builders import LLDPerformanceTestsuite
 from zorg.buildbot.builders import FuchsiaBuilder
 from zorg.buildbot.builders import XToolchainBuilder
 
+# TODO: Remove this once all the builders are supported by the new buildbot.
+from buildbot.plugins import util
+
+def get_all():
+    return [
+        util.BuilderConfig(
+            name="runtests",
+            tags=['llvm','clang','clang-tools-extra'],
+            workernames=["postpone"],
+            factory=UnifiedTreeBuilder.getCmakeWithNinjaBuildFactory(
+                depends_on_projects=[
+                    'llvm','clang','clang-tools-extra',
+                    'libcxx','libcxxabi','libunwind',
+                    'compiler-rt'],
+            )),
+        util.BuilderConfig(
+            name="llvm-sphinx-docs",
+            tags=['llvm','doc'],
+            workernames=["postpone"],
+            factory=SphinxDocsBuilder.getSphinxDocsBuildFactory(llvm_html=True, llvm_man=True),
+            builddir="llvm-sphinx-docs"
+            ),
+        util.BuilderConfig(
+            name="publish-sphinx-docs",
+            tags=['doc'],
+            builddir="ublish-sphinx-docs",
+            workernames=["ranby1"],
+            factory=SphinxDocsBuilder.getLLVMDocsBuildFactory(clean=True),
+            ),
+        util.BuilderConfig(
+            name='clang-x64-windows-msvc',
+            tags=['llvm','clang','lld'],
+            builddir="clang-x64-windows-msvc",
+            workernames=["postpone"],
+            factory=AnnotatedBuilder.getAnnotatedBuildFactory(
+                script="clang-windows.py",
+                depends_on_projects=['llvm', 'clang', 'lld', 'debuginfo-tests'])
+            ),
+        util.BuilderConfig(
+            name="clang-x86_64-linux-abi-test",
+            tags=['llvm', 'clang', 'clang-tools-extra', 'compiler-rt', 'lld'],
+            builddir="clang-x86_64-linux-abi-test",
+            collapseRequests=False,
+            workernames=["postpone"],
+            factory=ABITestsuitBuilder.getABITestsuitBuildFactory(
+                               # TODO: Enable Werror once all the warnings are cleaned.
+                               extra_configure_args = ["-DLLVM_ENABLE_WERROR=OFF","-GNinja"])
+            ),
+        util.BuilderConfig(
+            name="lld-perf-testsuite",
+            tags=['llvm','lld'],
+            builddir="lld-perf-testsuite",
+            collapseRequests=False,
+            workernames=["postpone"],
+            factory=LLDPerformanceTestsuite.getFactory(targets=["bin/lld"])
+        ),
+
+        util.BuilderConfig(
+            name="clang-atom-d525-fedora-rel",
+            tags=['llvm','clang','compiler-rt'],
+            builddir="clang-atom-d525-fedora-rel",
+            collapseRequests=False,
+            workernames=["postpone"],
+            factory=ClangBuilder.getClangCMakeBuildFactory(
+                       clean=False,
+                       checkout_compiler_rt=False,
+                       checkout_lld=False,
+                       useTwoStage=False,
+                       stage1_config='Release',
+                       test=True,
+                       testStage1=True,
+                       extra_cmake_args=['-DLLVM_ENABLE_ASSERTIONS=ON',
+                                         '-DLLVM_USE_INTEL_JITEVENTS=TRUE'])
+        ),
+
+        util.BuilderConfig(
+            name='libcxx-libcxxabi-x86_64-linux-debian',
+            tags=['libcxx'],
+            builddir='libcxx-libcxxabi-x86_64-linux-debian',
+            collapseRequests=False,
+            workernames=["postpone"],
+            factory=LibcxxAndAbiBuilder.getLibcxxAndAbiBuilder(
+                        env={'CC': 'clang', 'CXX': 'clang++'},
+                        lit_extra_args=['--shuffle'],
+                        check_libcxx_abilist=True),
+        ),
+
+        util.BuilderConfig(
+            name="polly-x86_64-linux",
+            tags=['polly'],
+            builddir="polly-x86_64-linux",
+            workernames=["postpone"],
+            factory=PollyBuilder.getPollyBuildFactory(
+                clean=False,
+                install=False,
+                make='ninja',
+                extraCmakeArgs=["-G", "Ninja",
+                                "-DLLVM_ENABLE_ASSERTIONS=True",
+                                "-DLLVM_TARGETS_TO_BUILD='X86;NVPTX'",
+                                "-DCLANG_ENABLE_ARCMT=OFF",
+                                "-DCLANG_ENABLE_STATIC_ANALYZER=OFF",
+                                ])
+        ),
+
+        util.BuilderConfig(
+            name="lldb-x86_64-fedora",
+            tags=['lldb'],
+            builddir="lldb-x86_64-fedora",
+            workernames=["postpone"],
+            factory=LLDBBuilder.getLLDBCMakeBuildFactory(
+                    clean=True,
+                    test=True,
+                    extra_cmake_args=['-DLLVM_ENABLE_ASSERTIONS=True',
+                                      '-DLLVM_LIT_ARGS=-v'])
+        ),
+
+        util.BuilderConfig(
+            name="clang-with-thin-lto-ubuntu",
+            tags=['lld','lto'],
+            builddir="clang-with-thin-lto-ubuntu",
+            workernames=["postpone"],
+            factory=ClangLTOBuilder.getClangWithLTOBuildFactory(lto='thin'),
+        ),
+
+        util.BuilderConfig(
+            name="openmp-gcc-x86_64-linux-debian",
+            tags=['openmp'],
+            builddir="openmp-gcc-x86_64-linux-debian",
+            workernames=["postpone"],
+            factory=OpenMPBuilder.getOpenMPCMakeBuildFactory(),
+        ),
+
+        util.BuilderConfig(
+            name="fuchsia-x86_64-linux",
+            tags=['fuchsia'],
+            builddir="fuchsia-x86_64-linux",
+            workernames=["postpone"],
+            factory=FuchsiaBuilder.getFuchsiaToolchainBuildFactory(),
+        ),
+
+        util.BuilderConfig(
+            name="aosp-O3-polly-before-vectorizer-unprofitable",
+            tags=[''],
+            builddir="aosp",
+            workernames=["postpone"],
+            factory=AOSPBuilder.getAOSPBuildFactory(
+                device="angler",
+                extra_cmake_args=["-G", "Ninja",
+                                  "-DLLVM_TARGETS_TO_BUILD='ARM;AArch64'",
+                                  "-DLLVM_DEFAULT_TARGET_TRIPLE=arm-linux-androideabi",
+                                  "-DLLVM_TARGET_ARCH=arm-linux-androideabi",
+                                  "-DLLVM_ENABLE_ASSERTIONS=True",
+                                  "-DLLVM_ENABLE_LIBCXX:BOOL=ON",
+                                  "-DCMAKE_C_COMPILER:FILEPATH=/local/clang+llvm-8.0.0-x86_64-linux-gnu-ubuntu-14.04/bin/clang",
+                                  "-DCMAKE_CXX_COMPILER:FILEPATH=/local/clang+llvm-8.0.0-x86_64-linux-gnu-ubuntu-14.04/bin/clang++"],
+                timeout=240,
+                target_flags="-Wno-error -O3 -mllvm -polly -mllvm -polly-position=before-vectorizer -mllvm -polly-process-unprofitable -fcommon",
+                jobs=8,
+                extra_make_args=None,
+                env={'LD_LIBRARY_PATH': '/local/clang+llvm-8.0.0-x86_64-linux-gnu-ubuntu-14.04/lib', 'PATH': ['/local/cmake-3.17.0/bin', '${PATH}']},
+                clean=False,
+                sync=False,
+                patch=None)
+        ),
+
+    ]
+
+"""
+#######################
+
 # Plain LLVM builders.
 def _get_llvm_builders():
     return [
+        {'name' : "llvm-clang-x86_64-win-fast",
+         'slavenames' : ["as-builder-3"],
+         'builddir' : "llvm-clang-x86_64-win-fast",
+         'mergeRequests': False,
+         'factory': UnifiedTreeBuilder.getCmakeWithNinjaWithMSVCBuildFactory(
+                      vs="autodetect",
+                      depends_on_projects=['llvm', 'clang'],
+                      clean=True,
+                      checks=[
+                        "check-llvm-unit",
+                        "check-clang-unit"],
+                      extra_configure_args=[
+                        "-DLLVM_ENABLE_WERROR=OFF",
+                        "-DLLVM_TARGETS_TO_BUILD=ARM",
+                        "-DLLVM_DEFAULT_TARGET_TRIPLE=armv7-unknown-linux-eabihf",
+                        "-DLLVM_ENABLE_ASSERTIONS=OFF",
+                        "-DLLVM_OPTIMIZED_TABLEGEN=OFF",
+                        "-DLLVM_LIT_ARGS='-v --threads=32'"])},
         ]
 
 # Clang fast builders.
@@ -862,7 +1051,6 @@ def _get_aosp_builders():
          'builddir': "aosp",
          'factory': AOSPBuilder.getAOSPBuildFactory(
                 device="angler",
-                build_clang=True,
                 extra_cmake_args=["-G", "Ninja",
                                   "-DLLVM_TARGETS_TO_BUILD='ARM;AArch64'",
                                   "-DLLVM_DEFAULT_TARGET_TRIPLE=arm-linux-androideabi",
@@ -1096,7 +1284,7 @@ def _get_mlir_builders():
                               'CXX': 'clang++',
                               'LD': 'lld',
                         })},
-       # Latest stable fedora running on Red Hat internal OpenShift cluster (PSI)  
+       # Latest stable fedora running on Red Hat internal OpenShift cluster (PSI)
        {'name': 'x86_64-fedora-clang',
         'mergeRequests': False,
         'slavenames': ['fedora-llvm-x86_64'],
@@ -1739,7 +1927,8 @@ def _get_ml_compiler_opt_builders():
                         ])},
     ]
 
-def get_builders():
+# TODO: Rename upon completion
+def disabled_get_builders():
     for b in _get_llvm_builders():
         b['category'] = 'llvm'
         yield b
@@ -1816,3 +2005,4 @@ def get_builders():
         if not b.get('category', '').endswith('.on-demand'):
            b['category'] = b.get('category', '') + '.on-demand'
         yield b
+"""
