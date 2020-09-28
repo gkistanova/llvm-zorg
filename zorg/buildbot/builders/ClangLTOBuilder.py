@@ -1,7 +1,7 @@
 from buildbot.steps.shell import ShellCommand
-from buildbot.steps.slave import RemoveDirectory
-from buildbot.status.results import FAILURE
+from buildbot.process.results import FAILURE
 from buildbot.process.properties import WithProperties
+from buildbot.plugins import steps
 
 from zorg.buildbot.commands.CmakeCommand import CmakeCommand
 from zorg.buildbot.commands.NinjaCommand import NinjaCommand
@@ -27,13 +27,13 @@ def _addSteps4SystemCompiler(
 
     # This stage could use incremental build.
     # Clean stage1, only if requested.
-    f.addStep(RemoveDirectory(name='clean-%s-dir' % obj_dir,
+    f.addStep(steps.RemoveDirectory(name='clean-%s-dir' % obj_dir,
               dir=obj_dir,
               haltOnFailure=False,
               flunkOnFailure=False,
               doStepIf=clean
               ))
-    f.addStep(RemoveDirectory(name='clean-%s-dir' % f.stage_installdirs[stage_idx],
+    f.addStep(steps.RemoveDirectory(name='clean-%s-dir' % f.stage_installdirs[stage_idx],
               dir=f.stage_installdirs[stage_idx],
               haltOnFailure=False,
               flunkOnFailure=False,
@@ -82,7 +82,8 @@ def _addSteps4SystemCompiler(
                            path=src_dir,
                            env=env,
                            workdir=obj_dir,
-                           doStepIf=FileDoesNotExist("CMakeCache.txt")
+                           # TODO: Double check this:
+                           #doStepIf=FileDoesNotExist("CMakeCache.txt")
                            ))
 
     # Build clang by the system compiler
@@ -138,13 +139,13 @@ def _addSteps4StagedCompiler(
     staged_install = f.stage_installdirs[use_stage_idx]
 
     # Always do a clean build for the staged compiler.
-    f.addStep(RemoveDirectory(name='clean-%s-dir' % obj_dir,
+    f.addStep(steps.RemoveDirectory(name='clean-%s-dir' % obj_dir,
               dir=obj_dir,
               haltOnFailure=False,
               flunkOnFailure=False,
               ))
 
-    f.addStep(RemoveDirectory(name='clean-%s-dir' % f.stage_installdirs[stage_idx],
+    f.addStep(steps.RemoveDirectory(name='clean-%s-dir' % f.stage_installdirs[stage_idx],
               dir=f.stage_installdirs[stage_idx],
               haltOnFailure=False,
               flunkOnFailure=False,
@@ -175,11 +176,11 @@ def _addSteps4StagedCompiler(
 
     cmake_args.append(
         WithProperties(
-            "-DCMAKE_CXX_COMPILER=%(workdir)s/" + staged_install + "/bin/clang++"
+            "-DCMAKE_CXX_COMPILER=%(builddir)s/" + staged_install + "/bin/clang++"
         ))
     cmake_args.append(
         WithProperties(
-            "-DCMAKE_C_COMPILER=%(workdir)s/" + staged_install + "/bin/clang"
+            "-DCMAKE_C_COMPILER=%(builddir)s/" + staged_install + "/bin/clang"
         ))
 
     CmakeCommand.applyRequiredOptions(cmake_args, [
@@ -194,7 +195,8 @@ def _addSteps4StagedCompiler(
                            path=src_dir,
                            env=env,
                            workdir=obj_dir,
-                           doStepIf=FileDoesNotExist("CMakeCache.txt")
+                           # TODO: Double check this:
+                           #doStepIf=FileDoesNotExist("CMakeCache.txt")
                            ))
 
     # Build clang by the staged compiler
@@ -249,9 +251,6 @@ def getClangWithLTOBuildFactory(
 
     if lto is None:
         lto = 'ON'
-
-    if jobs is None:
-        jobs = "%(jobs)s"
 
     if extra_configure_args is None:
         extra_configure_args = []
@@ -330,11 +329,11 @@ def getClangWithLTOBuildFactory(
 
         configure_args.append(
             WithProperties(
-                "-DCMAKE_AR=%(workdir)s/" + staged_install + "/bin/llvm-ar"
+                "-DCMAKE_AR=%(builddir)s/" + staged_install + "/bin/llvm-ar"
             ))
         configure_args.append(
             WithProperties(
-                "-DCMAKE_RANLIB=%(workdir)s/" + staged_install + "/bin/llvm-ranlib"
+                "-DCMAKE_RANLIB=%(builddir)s/" + staged_install + "/bin/llvm-ranlib"
             ))
 
         _addSteps4StagedCompiler(f,
