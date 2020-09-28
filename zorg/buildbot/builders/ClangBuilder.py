@@ -302,9 +302,9 @@ def _getClangCMakeBuildFactory(
     if vs and vs != "manual":
         f.addStep(SetProperty(
             command=builders_util.getVisualStudioEnvironment(vs, vs_target_arch),
-            extract_fn=builders_util.extractSlaveEnvironment))
+            extract_fn=builders_util.extractVSEnvironment))
         assert not env, "Can't have custom builder env vars with VS"
-        env = Property('slave_env')
+        env = Property('vs_env')
 
 
     ############# CLEANING
@@ -454,17 +454,17 @@ def _getClangCMakeBuildFactory(
                                    env=env))
 
         # Get generated python, lnt
-        python = WithProperties('%(workdir)s/test/sandbox/bin/python')
-        lnt = WithProperties('%(workdir)s/test/sandbox/bin/lnt')
-        lnt_setup = WithProperties('%(workdir)s/test/lnt/setup.py')
+        python = WithProperties('%(builddir)s/test/sandbox/bin/python')
+        lnt = WithProperties('%(builddir)s/test/sandbox/bin/lnt')
+        lnt_setup = WithProperties('%(builddir)s/test/lnt/setup.py')
 
         # Paths
-        sandbox = WithProperties('%(workdir)s/test/sandbox')
-        test_suite_dir = WithProperties('%(workdir)s/test/test-suite')
+        sandbox = WithProperties('%(builddir)s/test/sandbox')
+        test_suite_dir = WithProperties('%(builddir)s/test/test-suite')
 
         # Get latest built Clang (stage1 or stage2)
-        cc = WithProperties('%(workdir)s/'+compiler_path+'/bin/'+cc)
-        cxx = WithProperties('%(workdir)s/'+compiler_path+'/bin/'+cxx)
+        cc = WithProperties('%(builddir)s/'+compiler_path+'/bin/'+cc)
+        cxx = WithProperties('%(builddir)s/'+compiler_path+'/bin/'+cxx)
 
         # LNT Command line (don't pass -jN. Users need to pass both --threads
         # and --build-threads in nt_flags/test_suite_flags to get the same effect)
@@ -479,7 +479,7 @@ def _getClangCMakeBuildFactory(
             # Append any option provided by the user
             test_suite_cmd.extend(nt_flags)
         else:
-            lit = WithProperties('%(workdir)s/'+stage1_build+'/bin/llvm-lit')
+            lit = WithProperties('%(builddir)s/'+stage1_build+'/bin/llvm-lit')
             test_suite_cmd = [python, lnt, 'runtest', 'test-suite',
                               '--no-timestamp',
                               '--sandbox', sandbox,
