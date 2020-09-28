@@ -1,7 +1,4 @@
-#!/usr/bin/python
-# Copyright (c) 2011 The Chromium Authors. All rights reserved.
-# Use of this source code is governed by a BSD-style license that can be
-# found in the LICENSE.chromium.TXT file.
+# TODO: Change WithProperties to Interpolate
 
 import copy
 import re
@@ -11,7 +8,10 @@ import time
 from buildbot import util
 from buildbot.process import buildstep
 from buildbot.process.properties import WithProperties
-from buildbot.status import builder
+from buildbot.process.results import SUCCESS
+from buildbot.process.results import WARNINGS
+from buildbot.process.results import FAILURE
+from buildbot.process.results import EXCEPTION
 from buildbot.steps import shell
 from buildbot.steps import source
 
@@ -19,10 +19,10 @@ from buildbot.steps import source
 class BuilderStatus(object):
   # Order in asceding severity.
   BUILD_STATUS_ORDERING = [
-      builder.SUCCESS,
-      builder.WARNINGS,
-      builder.FAILURE,
-      builder.EXCEPTION,
+      SUCCESS,
+      WARNINGS,
+      FAILURE,
+      EXCEPTION,
   ]
 
   @classmethod
@@ -195,7 +195,7 @@ class AnnotationObserver(buildstep.LogLineObserver):
     buildstep.LogLineObserver.__init__(self, *args, **kwargs)
     self.command = command
     self.sections = []
-    self.annotate_status = builder.SUCCESS
+    self.annotate_status = SUCCESS
     self.halt_on_failure = False
     self.honor_zero_return_code = False
 
@@ -208,7 +208,7 @@ class AnnotationObserver(buildstep.LogLineObserver):
         'name': 'preamble',
         'step': self.command.step_status.getBuild().steps[-1],
         'log': log,
-        'status': builder.SUCCESS,
+        'status': SUCCESS,
         'links': [],
         'step_summary_text': [],
         'step_text': [],
@@ -255,7 +255,7 @@ class AnnotationObserver(buildstep.LogLineObserver):
     last = self.sections[-1]
     last['status'] = BuilderStatus.combine(last['status'], status)
     if self.halt_on_failure and last['status'] in [
-        builder.FAILURE, builder.EXCEPTION]:
+        FAILURE, EXCEPTION]:
       self.fixupLast()
       self.command.finished(last['status'])
 
@@ -267,9 +267,9 @@ class AnnotationObserver(buildstep.LogLineObserver):
     last = self.sections[-1]
 
     # Reflect step status in text2.
-    if last['status'] == builder.EXCEPTION:
+    if last['status'] == EXCEPTION:
       result = ['exception', last['name']]
-    elif last['status'] == builder.FAILURE:
+    elif last['status'] == FAILURE:
       result = ['failed', last['name']]
     else:
       result = []
@@ -299,17 +299,17 @@ class AnnotationObserver(buildstep.LogLineObserver):
     # Also support deprecated @@@BUILD_WARNINGS@@@
     if (line.startswith('@@@STEP_WARNINGS@@@') or
         line.startswith('@@@BUILD_WARNINGS@@@')):
-      self.updateStepStatus(builder.WARNINGS)
+      self.updateStepStatus(WARNINGS)
     # Support: @@@STEP_FAILURE@@@ (fail a stage)
     # Also support deprecated @@@BUILD_FAILED@@@
     if (line.startswith('@@@STEP_FAILURE@@@') or
         line.startswith('@@@BUILD_FAILED@@@')):
-      self.updateStepStatus(builder.FAILURE)
+      self.updateStepStatus(FAILURE)
     # Support: @@@STEP_EXCEPTION@@@ (exception on a stage)
     # Also support deprecated @@@BUILD_FAILED@@@
     if (line.startswith('@@@STEP_EXCEPTION@@@') or
         line.startswith('@@@BUILD_EXCEPTION@@@')):
-      self.updateStepStatus(builder.EXCEPTION)
+      self.updateStepStatus(EXCEPTION)
     # Support: @@@HALT_ON_FAILURE@@@ (halt if a step fails immediately)
     if line.startswith('@@@HALT_ON_FAILURE@@@'):
       self.halt_on_failure = True
@@ -352,7 +352,7 @@ class AnnotationObserver(buildstep.LogLineObserver):
             'name': step_name,
             'step': step,
             'log': log,
-            'status': builder.SUCCESS,
+            'status': SUCCESS,
             'links': [],
             'step_summary_text': [],
             'step_text': [],
@@ -371,10 +371,10 @@ class AnnotationObserver(buildstep.LogLineObserver):
     if return_code == 0:
       self.fixupLast()
       if self.honor_zero_return_code:
-        self.annotate_status = builder.SUCCESS
+        self.annotate_status = SUCCESS
     else:
-      self.annotate_status = builder.FAILURE
-      self.fixupLast(builder.FAILURE)
+      self.annotate_status = FAILURE
+      self.fixupLast(FAILURE)
 
 
 class AnnotatedCommand(ProcessLogShellStep):
@@ -407,7 +407,7 @@ class AnnotatedCommand(ProcessLogShellStep):
     self.addLogObserver('stdio', self.script_observer)
 
   def interrupt(self, reason):
-    self.script_observer.fixupLast(builder.EXCEPTION)
+    self.script_observer.fixupLast(EXCEPTION)
     return ProcessLogShellStep.interrupt(self, reason)
 
   def evaluateCommand(self, cmd):
