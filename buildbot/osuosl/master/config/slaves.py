@@ -44,22 +44,23 @@ def get_all():
         create_worker("linaro-armv8-libcxx", properties={'jobs' : 1}, max_builds=1),
         create_worker("linaro-arm-lldb", properties={'jobs' : 16}, max_builds=1),
 
-        # AArch64 Linaro workers
+        # AArch64 Linaro slaves
         create_worker("linaro-aarch64-quick", properties={'jobs' : 32}, max_builds=1),
         create_worker("linaro-aarch64-full", properties={'jobs' : 32}, max_builds=1),
         create_worker("linaro-aarch64-global-isel", properties={'jobs' : 32}, max_builds=1),
         create_worker("linaro-aarch64-lld", properties={'jobs' : 32}, max_builds=1),
+        create_worker("linaro-aarch64-flang-oot", properties={'jobs' : 32}, max_builds=1),
         # Libcxx testsuite has tests with timing assumptions.  Run single-threaded to make
         # sure we have plenty CPU cycle to satisfy timing assumptions.
         create_worker("linaro-aarch64-libcxx", properties={'jobs' : 1}, max_builds=1),
         create_worker("linaro-aarch64-lldb", properties={'jobs': 16}, max_builds=1),
 
         # AArch64
-        create_slave("linaro-armv8-windows-msvc-01", properties={'jobs' : 8}, max_builds=1),
-        create_slave("linaro-armv8-windows-msvc-02", properties={'jobs' : 8}, max_builds=1),
+        create_worker("linaro-armv8-windows-msvc-01", properties={'jobs' : 8}, max_builds=1),
+        create_worker("linaro-armv8-windows-msvc-02", properties={'jobs' : 8}, max_builds=1),
 
         # ARMv7 build cache slave
-        create_slave("packet-linux-armv7-slave-1", properties={'jobs' : 64}, max_builds=1),
+        create_worker("packet-linux-armv7-slave-1", properties={'jobs' : 64}, max_builds=1),
 
         # AArch64 build cache worker
         create_worker("packet-linux-aarch64-slave-1", properties={'jobs' : 64}, max_builds=1),
@@ -114,7 +115,7 @@ def get_all():
         # Debian 7.7 x86_64 GCE instance
         create_worker("sanitizer-buildbot3", properties={'jobs': 64}, max_builds=2),
         # Debian 7.7 x86_64 GCE instance
-        create_slave("sanitizer-buildbot4", properties={'jobs': 64}, max_builds=2),
+        create_worker("sanitizer-buildbot4", properties={'jobs': 64}, max_builds=2),
         # Ubuntu 14.04 x86_64 6-core z440 workstation
         create_worker("sanitizer-buildbot6", properties={'jobs': 6}, max_builds=1),
         # Debian 7.7 x86_64 GCE instance
@@ -134,7 +135,7 @@ def get_all():
 
 
         # Windows Server 2012 x86_64 16-core GCE instance
-        create_slave("sanitizer-windows", properties={'jobs': 16}, max_builds=1),
+        create_worker("sanitizer-windows", properties={'jobs': 16}, max_builds=1),
         # Windows Server 2012 x86_64 32-core GCE instance
         create_worker("windows-gcebot2", properties={'jobs': 32}, max_builds=1),
 
@@ -164,7 +165,7 @@ def get_all():
         create_worker("lldb-x86_64-fedora", properties={'jobs': 4}, max_builds=1),
 
         # Fedora latest stable, arch=x86_64, running on RedHat internal OpenShift PSI cluster
-        create_slave("fedora-llvm-x86_64", properties={'jobs': 32}, max_builds=1),
+        create_worker("fedora-llvm-x86_64", properties={'jobs': 64}, max_builds=1),
 
         # Debian x86_64 Buster Xeon(R) Gold 6154 CPU @ 3.00GHz, 192GB RAM
         create_worker("lldb-x86_64-debian", properties={'jobs': 72}, max_builds=1),
