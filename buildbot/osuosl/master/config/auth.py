@@ -6,11 +6,11 @@ from buildbot.plugins import util
 def getAuth():
     # For test local setup use NoAuth instead.
     auth = util.GitHubAuth(
-        clientId=str("<put clientId here"), # TODO: Move this to local.cfg.
-        clientSecret=str("<put clientSecret here>"), # TODO: Move this to local.cfg.
+        clientId=str(config.options.get('GitHub Auth', 'clientId')),
+        clientSecret=str(config.options.get('GitHub Auth', 'clientSecret'),
         apiVersion=4,
         getTeamsMembership=True,
-        #debug=True, # TODO: Turn this to false once validated working.
+        debug=True, # TODO: Turn this to false once validated working.
     )
     return auth
 
@@ -22,33 +22,34 @@ def getAuthz():
             util.AnyEndpointMatcher(defaultDeny=False),
 
             # Admins can do anything.
+            # defaultDeny=False: if user does not have the admin role,
+            # we continue parsing rules.
             util.AnyEndpointMatcher(role="admins", defaultDeny=False),
+
             # Allow authors to stop, force or rebuild their own builds,
-            # allow core devs to stop, force or rebuild any build.
             util.StopBuildEndpointMatcher(role="owner", defaultDeny=False),
-            util.StopBuildEndpointMatcher(
-                role="buildbot-owners", defaultDeny=False
-            ),
-            util.StopBuildEndpointMatcher(role="???"),
+            # Allow bot owners to stop, force or rebuild on their own bots,
+            util.StopBuildEndpointMatcher(role="worker-owner", defaultDeny=False),
+
+            # allow core devs to force or rebuild any build.
             util.RebuildBuildEndpointMatcher(role="owner", defaultDeny=False),
-            util.RebuildBuildEndpointMatcher(
-                role="buildbot-owners", defaultDeny=False
-            ),
-            util.RebuildBuildEndpointMatcher(role="???"),
+            util.RebuildBuildEndpointMatcher(role="worker-owner", defaultDeny=False),
+            util.RebuildBuildEndpointMatcher(role="developers"),
+
             util.ForceBuildEndpointMatcher(role="owner", defaultDeny=False),
-            util.ForceBuildEndpointMatcher(role="???"),
-            # Future-proof control endpoints.
+            util.ForceBuildEndpointMatcher(role="worker-owner", defaultDeny=False),
+            util.ForceBuildEndpointMatcher(role="developers"),
+
+            # Future-proof control endpoints. No parsing rules beyond this.
             util.AnyControlEndpointMatcher(role="admins"),
         ],
         roleMatchers=[
             util.RolesFromGroups(groupPrefix="llvm/"),
-            util.RolesFromOwner(role="owner"),
+            # role owner is granted when property owner matches the email of the user
+            util.RolesFromOwner(role="owner")
             util.RolesFromUsername(
                 roles=["admins"],
-                usernames=[       # TODO: Move this to local.cfg.
-                    "gkistanova",
-                    "andreil99",
-                ],
+                usernames=config.options.option(),
             ),
         ],
     )
