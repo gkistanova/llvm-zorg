@@ -32,7 +32,7 @@ class LLVMPoller(changes.GitPoller):
         self.cleanRe = re.compile(r"Require(?:s?)\s*.*\s*clean build", re.IGNORECASE + re.MULTILINE)
         self.cleanCfg = re.compile(r"(CMakeLists\.txt$|\.cmake$|\.cmake\.in$)")
 
-        # TODO: Add support for a list of projects.
+        # TODO: Add support for an optional list of projects.
         # For now we always watch all the projects.
 
         super().__init__(repourl=repourl, branch=branch, **kwargs)
