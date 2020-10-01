@@ -10,11 +10,6 @@ def create_worker(name, *args, **kwargs):
 
 def get_all():
     return [
-        # Test worker. For debug only. Remove it later.
-        create_worker("ranby1", properties={'jobs' : 24}, max_builds=2),
-        create_worker("postpone"),
-    ]
-"""
         # FreeBSD 11.0-CURRENT
         create_worker("as-bldslv5", properties={'jobs' : 24}, max_builds=2),
 
@@ -84,7 +79,7 @@ def get_all():
         create_worker("ppc64le-sanitizer", properties={'jobs': 4}, max_builds=1),
         create_worker("ppc64le-lld-multistage-test", max_builds=1),
         create_worker("ppc64le-clang-rhel-test", properties={'jobs': 4}, max_builds=1),
-        create_worker("ppc64le-flang+mlir-rhel-test", max_builds=1),
+        create_worker("ppc64le-flang-mlir-rhel-test", max_builds=1),
 
         # Ubuntu x86-64, Intel(R) Xeon(R) CPU E5-2680 0 @ 2.70GHz
         create_worker("hexagon-build-02", properties={'jobs': 12, 'loadaverage': 32},
@@ -229,4 +224,3 @@ def get_all():
         create_worker("ml-opt-devrel-x86-64-b1",
                      properties={'jobs': 64}, max_builds=1),
         ]
-"""
