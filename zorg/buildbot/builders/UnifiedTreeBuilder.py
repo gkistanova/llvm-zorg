@@ -191,8 +191,10 @@ def addNinjaSteps(
                            ))
 
     # Test just built components if requested.
-    check_env = env.copy() if env else dict()
-    check_env['NINJA_STATUS'] = check_env.get('NINJA_STATUS', "%e [%u/%r/%f] ")
+    # Note: At this point env could be None, a dictionary, or a Property object.
+    if isinstance(env, dict):
+        check_env = env.copy() if env else dict()
+        check_env['NINJA_STATUS'] = check_env.get('NINJA_STATUS', "%e [%u/%r/%f] ")
 
     for check in checks:
         f.addStep(LitTestCommand(name="test-%s%s" % (step_name, check),
