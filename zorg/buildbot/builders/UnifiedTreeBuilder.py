@@ -195,6 +195,8 @@ def addNinjaSteps(
     if isinstance(env, dict):
         check_env = env.copy() if env else dict()
         check_env['NINJA_STATUS'] = check_env.get('NINJA_STATUS', "%e [%u/%r/%f] ")
+    else:
+        check_env = env
 
     for check in checks:
         f.addStep(LitTestCommand(name="test-%s%s" % (step_name, check),
