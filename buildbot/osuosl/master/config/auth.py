@@ -1,3 +1,5 @@
+import config
+
 #from buildbot.www.auth import NoAuth
 from buildbot.plugins import util
 
@@ -7,7 +9,7 @@ def getAuth():
     # For test local setup use NoAuth instead.
     auth = util.GitHubAuth(
         clientId=str(config.options.get('GitHub Auth', 'clientId')),
-        clientSecret=str(config.options.get('GitHub Auth', 'clientSecret'),
+        clientSecret=str(config.options.get('GitHub Auth', 'clientSecret')),
         apiVersion=4,
         getTeamsMembership=True,
         debug=True, # TODO: Turn this to false once validated working.
@@ -19,7 +21,7 @@ def getAuthz():
 
     authz = util.Authz(
         allowRules=[
-            util.AnyEndpointMatcher(defaultDeny=False),
+            util.AnyEndpointMatcher(role="viewers", defaultDeny=False),
 
             # Admins can do anything.
             # defaultDeny=False: if user does not have the admin role,
@@ -46,10 +48,10 @@ def getAuthz():
         roleMatchers=[
             util.RolesFromGroups(groupPrefix="llvm/"),
             # role owner is granted when property owner matches the email of the user
-            util.RolesFromOwner(role="owner")
+            util.RolesFromOwner(role="owner"),
             util.RolesFromUsername(
                 roles=["admins"],
-                usernames=config.options.option(),
+                usernames=config.options.options("Admins"),
             ),
         ],
     )
