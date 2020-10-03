@@ -36,7 +36,7 @@ def getLLVMBuildFactoryAndPrepareForSourcecodeSteps(
             **kwargs) # Pass through all the extra arguments.
 
     # Remove the source code for a clean checkout if requested by property.
-    # TODO: Some Windows slaves do not handle RemoveDirectory command well.
+    # TODO: Some Windows workers do not handle RemoveDirectory command well.
     # So, consider running "rmdir /S /Q <dir>" if the build runs on Windows.
     f.addStep(steps.RemoveDirectory(name='clean-src-dir',
               dir=f.monorepo_dir,
@@ -90,7 +90,7 @@ def addCmakeSteps(
 
     # This is an incremental build, unless otherwise has been requested.
     # Remove obj and install dirs for a clean build.
-    # TODO: Some Windows slaves do not handle RemoveDirectory command well.
+    # TODO: Some Windows workers do not handle RemoveDirectory command well.
     # So, consider running "rmdir /S /Q <dir>" if the build runs on Windows.
     f.addStep(steps.RemoveDirectory(name='clean-%s-dir' % obj_dir,
               dir=obj_dir,

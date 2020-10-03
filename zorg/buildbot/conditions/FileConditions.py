@@ -4,7 +4,7 @@ import stat
 
 
 class FileExists(object):
-    """I check a file existence on the buildslave. I return True if the file
+    """I check a file existence on the worker. I return True if the file
     with the given name exists, False if the file does not exist or that is
     a directory.
 
@@ -39,7 +39,7 @@ class FileExists(object):
 
 
 class FileDoesNotExist(object):
-    """I check a file existence on the buildslave. I return False if
+    """I check a file existence on the worker. I return False if
     the file with the given name exists or that is a directory, True if the
     file does not exist.
 

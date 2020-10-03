@@ -12,7 +12,7 @@ class InterpolateToNativePath(WithProperties):
     """
     This is a marker class, used to indicate that we
     want to interpolate build properties as a paths with
-    the correct buildslave path separator.
+    the correct worker path separator.
     """
 
     compare_attrs = ('fmtstring', 'args', 'lambda_subs')

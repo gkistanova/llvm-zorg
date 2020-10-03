@@ -10,14 +10,14 @@ def create_worker(name, *args, **kwargs):
 
 def get_all():
     return [
-        # FreeBSD 11.0-CURRENT
-        create_worker("as-bldslv5", properties={'jobs' : 24}, max_builds=2),
+        # FreeBSD
+        create_worker("as-worker-4", properties={'jobs' : 24}, max_builds=2),
 
-        # Linux Ubuntu 14.04 LTS
-        create_worker("as-bldslv8", properties={'jobs' : 16}),
+        # Linux Ubuntu
+        create_worker("as-worker-5", properties={'jobs' : 16}),
 
         # Mac Pro 2.7 GHz 12-Core Intel Xeon E5, Maverick 10.9.2
-        create_worker("as-bldslv9", properties={'jobs' : 8}, max_builds=4),
+        create_worker("as-worker-3", properties={'jobs' : 8}, max_builds=4),
 
         # ARMv7/ARMv8 Linaro workers
         create_worker("linaro-tk1-01", properties={'jobs' : 4}, max_builds=1),
@@ -135,11 +135,11 @@ def get_all():
         create_worker("windows-gcebot2", properties={'jobs': 32}, max_builds=1),
 
         # Ubuntu 14.04 x86_64-scei-ps4, 2 x Intel(R) Xeon(R) CPU E5-2699 v3 @ 2.30GHz
-        create_worker("ps4-buildslave1"),
-        create_worker("ps4-buildslave1a", properties={'jobs': 64}, max_builds=2),
+        create_worker("as-worker-91"),
+        create_worker("as-worker-92"),
 
         # Windows 10 Pro x86_64-scei-ps4, 2 x Intel(R) Xeon(R) CPU E5-2699 v3 @ 2.30GHz
-        create_worker("ps4-buildslave2", properties={'jobs': 36}, max_builds=1),
+        create_worker("as-worker-93", properties={'jobs': 36}, max_builds=1),
 
         # WIP migration of the CUDA buildbot to GCE.
         create_worker("cuda-k80-0", max_builds=1),
