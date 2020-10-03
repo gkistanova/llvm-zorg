@@ -12,4 +12,4 @@ import config.auth
 import config.builders
 import config.schedulers
 import config.workers
-#import status # TODO: status should be renames to something else.
+import config.status
