@@ -18,7 +18,7 @@ class InterpolateToNativePath(WithProperties):
     compare_attrs = ('fmtstring', 'args', 'lambda_subs')
 
     def __init__(self, fmtstring, *args, **lambda_subs):
-        super.__init__(self, fmtstring, *args, **lambda_subs)
+        super().__init__(self, fmtstring, *args, **lambda_subs)
 
     def getRenderingFor(self, build):
         # Upcall the base class first.
@@ -43,7 +43,7 @@ class InterpolateToPosixPath(WithProperties):
     compare_attrs = ('fmtstring', 'args', 'lambda_subs')
 
     def __init__(self, fmtstring, *args, **lambda_subs):
-        super.__init__(self, fmtstring, *args, **lambda_subs)
+        super().__init__(self, fmtstring, *args, **lambda_subs)
 
     def getRenderingFor(self, build):
         # Upcall the base class first.
