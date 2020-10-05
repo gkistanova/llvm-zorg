@@ -48,7 +48,6 @@ def getReporters():
             lookup = "lab.llvm.org",
             messageFormatter = LLVMInformativeMailNotifier,
             # TODO: For debug purposes only. Remove later.
-            sendToInterestedUsers=False,
             dumpMailsToLog = True,
             ),
 
