@@ -2,7 +2,7 @@ from buildbot.process.properties import Interpolate
 from buildbot.plugins import reporters
 
 import config
-#from zorg.buildbot.util.InformativeMailNotifier import InformativeMailNotifier
+from zorg.buildbot.util.InformativeMailNotifier import LLVMInformativeMailNotifier
 
 # Returns a list of Status Targets. The results of each build will be
 # pushed to these targets. buildbot/status/*.py has a variety to choose from,
@@ -10,7 +10,8 @@ import config
 
 def getReporters():
 
-#    default_email = config.options.get('Master Options', 'default_email')
+    # Should be a single e-mail address
+    status_email = str(config.options.get('Master Options', 'status_email')).split(',')
 
     return [
 
@@ -27,4 +28,28 @@ def getReporters():
                 "llvm-clang-x86_64-expensive-checks-debian",
             ]),
 
-        ]
+        reporters.IRC(
+            useColors=False,
+            host = str(config.options.get('IRC', 'host')),
+            nick = str(config.options.get('IRC', 'nick')),
+            channels = str(config.options.get('IRC', 'channels')).split(','),
+            #authz=... # TODO: Consider allowing "harmful" operations to authorizes users.
+            useRevisions = False, # FIXME: There is a bug in the buildbot
+            showBlameList = True,
+            notify_events = str(config.options.get('IRC', 'notify_events')).split(','),
+            ),
+
+        reporters.MailNotifier(
+            #mode = ('problem',),
+            mode = 'all',
+            fromaddr = "llvm.buildmaster@lab.llvm.org", # TODO: Change this to buildmaster@lab.llvm.org.
+            extraRecipients = status_email,
+            extraHeaders = {"Reply-To": status_email[0]}, # The first from the list.
+            lookup = "lab.llvm.org",
+            messageFormatter = LLVMInformativeMailNotifier,
+            # TODO: For debug purposes only. Remove later.
+            sendToInterestedUsers=False,
+            dumpMailsToLog = True,
+            ),
+
+    ]
