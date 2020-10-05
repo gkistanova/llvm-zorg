@@ -40,8 +40,7 @@ def getReporters():
             ),
 
         reporters.MailNotifier(
-            #mode = ('problem',),
-            mode = 'all',
+            mode = ('problem',),
             fromaddr = "llvm.buildmaster@lab.llvm.org", # TODO: Change this to buildmaster@lab.llvm.org.
             extraRecipients = status_email,
             extraHeaders = {"Reply-To": status_email[0]}, # The first from the list.
