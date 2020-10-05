@@ -1052,7 +1052,7 @@ all = [
 
     {'name' : "mlir-nvidia",
     'tags'  : ["mlir"],
-    'workernames' : "mlir-nvidia"],
+    'workernames' : ["mlir-nvidia"],
     'builddir': "mlir-nvidia",
     'factory' : UnifiedTreeBuilder.getCmakeWithNinjaBuildFactory(
                     llvm_srcdir="llvm.src",
@@ -1091,7 +1091,7 @@ all = [
     {'name' : 'ppc64le-mlir-rhel-clang',
     'tags'  : ["mlir"],
     'collapseRequests' : False,
-    'workernames' : ['ppc64le-flang+mlir-rhel-test'],
+    'workernames' : ['ppc64le-flang-mlir-rhel-test'],
     'builddir': 'ppc64le-mlir-rhel-clang-build',
     'factory' : UnifiedTreeBuilder.getCmakeWithNinjaBuildFactory(
                     clean=True,
@@ -1461,8 +1461,7 @@ all = [
     'tags'  : ["toolchain"],
     'workernames' :["fuchsia-debian-64-us-central1-a-1", "fuchsia-debian-64-us-central1-b-1"],
     'builddir': "fuchsia-x86_64-linux",
-    'factory': FuchsiaBuilder.getFuchsiaToolchainBuildFactory(),
-    'category': 'fuchsia'},
+    'factory': FuchsiaBuilder.getFuchsiaToolchainBuildFactory()},
 
 # libc Builders
 
@@ -1542,7 +1541,7 @@ all = [
     {'name' : 'ppc64le-flang-rhel-clang',
     'tags'  : ["flang"],
     'collapseRequests' : False,
-    'workernames' : ['ppc64le-flang+mlir-rhel-test'],
+    'workernames' : ['ppc64le-flang-mlir-rhel-test'],
     'builddir': 'ppc64le-flang-rhel-clang-build',
     'factory' : UnifiedTreeBuilder.getCmakeWithNinjaBuildFactory(
                     clean=True,
