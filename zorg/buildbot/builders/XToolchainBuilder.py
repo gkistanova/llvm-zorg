@@ -116,7 +116,7 @@ def getCmakeWithMSVCBuildFactory(
     if vs:
         # Configure MSVC environment if requested.
         f.addStep(SetPropertyFromCommand(
-            command=builders_util.getVisualStudioEnvironment(vs, target_arch),
+            command=builders_util.getVisualStudioEnvironment(vs, None),
             extract_fn=builders_util.extractVSEnvironment))
         merged_env = Property('vs_env')
 

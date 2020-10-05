@@ -141,15 +141,13 @@ def addCmakeSteps(
     definitions = dict()
     options = list()
     for d in  cmake_args:
-        if d.startswith("-D"):
+        if isinstance(d, str) and d.startswith("-D"):
             k,v = d[2:].split('=', 1)
             definitions[k] = v
         else:
             options.append(d)
 
-# TODO: Change this to CmakeCommand once the issue with combining logs is figured out.
     f.addStep(CmakeCommand(name=step_name,
-#    f.addStep(steps.CMake(name=step_name,
                           haltOnFailure=True,
                           description=["Cmake", "configure", stage_name],
                           generator=generator,
