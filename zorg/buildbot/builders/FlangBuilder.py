@@ -10,6 +10,9 @@ def getFlangOutOfTreeBuildFactory(
            env = None,
            **kwargs):
 
+    if env is None:
+        env = dict()
+
     f = getCmakeWithNinjaBuildFactory(
             depends_on_projects=['llvm','mlir'],
             obj_dir="build_llvm",
