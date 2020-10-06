@@ -597,7 +597,7 @@ all = [
                         "-DCMAKE_C_COMPILER_EXTERNAL_TOOLCHAIN:PATH=/opt/rh/devtoolset-7/root/usr",
                         "-DCMAKE_CXX_COMPILER_EXTERNAL_TOOLCHAIN:PATH=/opt/rh/devtoolset-7/root/usr",
                         "-DLLVM_BINUTILS_INCDIR=/usr/include", "-DBUILD_SHARED_LIBS=ON", "-DLLVM_ENABLE_WERROR=ON",
-                        '-DLLVM_LIT_ARGS=-vj 256'])},
+                        '-DLLVM_LIT_ARGS=-vj 64'])},
 
     {'name' : "clang-s390x-linux",
     'tags'  : ["clang"],

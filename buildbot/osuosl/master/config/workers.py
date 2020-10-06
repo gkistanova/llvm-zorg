@@ -212,7 +212,7 @@ def get_all():
         create_worker("polly-x86_64-fdcserver", properties={'jobs': 8, 'loadaverage': 8}, max_builds=1),
 
         create_worker("flang-aarch64-ubuntu-build"),
-        create_worker("flang-aarch64-ubuntu-clang-build", properties={'jobs': 8}),
+        create_worker("flang-aarch64-ubuntu-clang-build", properties={'jobs': 16}),
         create_worker("flang-aarch64-ubuntu-gcc10-build", properties={'jobs': 8}),
         create_worker("nersc-flang"),
 
