@@ -10,13 +10,13 @@ from buildbot.plugins import schedulers, util
 # affects, and we want to schedule a build if one of them is
 # at interest.
 def isProjectOfInterest(cp, projects_of_interest):
-    log.msg(">>> isProjectOfInterest: filter \"%s\" for projects_of_interest %s" % (cp, projects_of_interest))
+    #log.msg(">>> isProjectOfInterest: filter \"%s\" for projects_of_interest %s" % (cp, projects_of_interest))
     if cp:
         changed_projects = frozenset(cp.split(','))
         if changed_projects.intersection(projects_of_interest):
-            log.msg("    >>> isProjectOfInterest returns True")
+            #log.msg("    >>> isProjectOfInterest returns True")
             return True
-    log.msg("    >>> isProjectOfInterest returns False")
+    #log.msg("    >>> isProjectOfInterest returns False")
     return False
 
 
@@ -92,3 +92,69 @@ def getSingleBranchSchedulers(
                 ", treeStableTimer=%s" % treeStableTimer,
                 "}")
     return automatic_schedulers
+
+# TODO: Move these settings to the configuration file.
+_repourl = "https://github.com/llvm/llvm-project"
+_branch = "master"
+_project = "llvm"
+
+def getForceSchedulers(builders):
+    # Walk over all builders and collect their names.
+    scheduler_builders = [
+        builder.name for builder in builders
+    ]
+
+    # Create the force schedulers.
+    return [ schedulers.ForceScheduler(
+                name            = "force-build-scheduler",
+                label           = "Force Build",
+                buttonName      = "Force Build",
+                reason 		= util.ChoiceStringParameter(
+                    name 		= "reason",
+                    label 		= "reason:",
+                    required 		= True,
+                    choices 		= [
+                        "Build a particular revision",
+                        "Force clean build",
+                        "Narrow down blamelist",
+                    ],
+                    default 		= "Build a particular revision"
+                ),
+                builderNames    = scheduler_builders,
+                codebases       = [
+                    util.CodebaseParameter(
+                        codebase    = "",
+                        branch          = util.FixedParameter(
+                            name        = "branch",
+                            default     = _branch
+                        ),
+                        revision    = util.StringParameter(
+                            name        = "revision",
+                            label       = "revision:",
+                            size        = 45,
+                            default     = ''
+                        ),
+                        repository  = util.FixedParameter(
+                            name        = "repository",
+                            default     = _repourl
+                        ),
+                        project     = util.FixedParameter(
+                            name        = "project",
+                            default     = _project
+                        )
+                    )
+                ],
+                properties  = [
+                    util.BooleanParameter(
+                        name        = "clean",
+                        label       = "Clean source code and build directory",
+                        default     = False
+                    ),
+                    util.BooleanParameter(
+                        name        = "clean_obj",
+                        label       = "Clean build directory",
+                        default     = False
+                    )
+                ]
+            )
+        ]
