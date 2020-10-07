@@ -2,6 +2,8 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#pylint: disable=invalid-name
+
 from zope.interface import implementer
 
 from buildbot.interfaces import IRenderable
@@ -15,14 +17,9 @@ class InterpolateToNativePath(WithProperties):
     the correct worker path separator.
     """
 
-    compare_attrs = ('fmtstring', 'args', 'lambda_subs')
-
-    def __init__(self, fmtstring, *args, **lambda_subs):
-        super().__init__(self, fmtstring, *args, **lambda_subs)
-
     def getRenderingFor(self, build):
         # Upcall the base class first.
-        p = super.getRenderingFor(self, build)
+        p = super().getRenderingFor(build)
 
         # Then we need to normalize the path for
         # watever is native on that worker.
@@ -40,14 +37,9 @@ class InterpolateToPosixPath(WithProperties):
     POSIX path separator.
     """
 
-    compare_attrs = ('fmtstring', 'args', 'lambda_subs')
-
-    def __init__(self, fmtstring, *args, **lambda_subs):
-        super().__init__(self, fmtstring, *args, **lambda_subs)
-
     def getRenderingFor(self, build):
         # Upcall the base class first.
-        p = super.getRenderingFor(self, build)
+        p = super().getRenderingFor(build)
 
         # Then we need to figure out the buildslave OS:
         worker = build.getBuild().workerforbuilder.worker
