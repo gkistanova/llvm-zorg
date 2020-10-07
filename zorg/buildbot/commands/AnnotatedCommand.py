@@ -203,7 +203,7 @@ class ProcessLogShellStep(shell.ShellCommand):
             self.addURL('results', "%s" % self._log_processor.ReportLink())
 
 
-class AnnotationObserver(buildstep.LogLineObserver):
+class AnnotationObserver_(buildstep.LogLineObserver):
     """This class knows how to understand annotations.
 
     Here are a list of the currently supported annotations:
@@ -285,11 +285,13 @@ class AnnotationObserver(buildstep.LogLineObserver):
         # having a single object for that should be enough.
         self._active_vstep = None
 
+        self._dlock = defer.DeferredLock()
+
         self._re_set = [
             # Support: @@@STEP_LINK@<name>@<url>@@@ (emit link)
             # Also support depreceated @@@link@<name>@<url>@@@
             {
-                're'    : AnnotationObserver._re_step_link,
+                're'    : AnnotationObserver_._re_step_link,
                 'op'    : lambda args: (
                     logging.msg("+++ op: STEP_LINK"),
                     self.queue_op(op=lambda: self.op_addStepLink(args['link_label'],
@@ -300,7 +302,7 @@ class AnnotationObserver(buildstep.LogLineObserver):
             # Support: @@@STEP_WARNINGS@@@ (warn on a stage)
             # Also support deprecated @@@BUILD_WARNINGS@@@
              {
-                're'    : AnnotationObserver._re_step_warnings,
+                're'    : AnnotationObserver_._re_step_warnings,
                 'op'    : lambda args: (
                     logging.msg("+++ op: STEP_WARNINGS"),
                     self.queue_op(op=lambda: self.op_updateStepStatus(builder.WARNINGS),
@@ -310,7 +312,7 @@ class AnnotationObserver(buildstep.LogLineObserver):
             # Support: @@@STEP_FAILURE@@@ (fail a stage)
             # Also support deprecated @@@BUILD_FAILED@@@
             {
-                're'    : AnnotationObserver._re_step_failure,
+                're'    : AnnotationObserver_._re_step_failure,
                 'op'    : lambda args: (
                     logging.msg("+++ op: STEP_FAILURE"),
                     self.queue_op(op=lambda: self.op_updateStepStatus(builder.FAILURE),
@@ -320,7 +322,7 @@ class AnnotationObserver(buildstep.LogLineObserver):
             # Support: @@@STEP_EXCEPTION@@@ (exception on a stage)
             # Also support deprecated @@@BUILD_FAILED@@@
             {
-                're'    : AnnotationObserver._re_step_exception,
+                're'    : AnnotationObserver_._re_step_exception,
                 'op'    : lambda args: (
                     logging.msg("+++ op: STEP_EXCEPTION"),
                     self.queue_op(op=lambda: self.op_updateStepStatus(builder.EXCEPTION),
@@ -329,7 +331,7 @@ class AnnotationObserver(buildstep.LogLineObserver):
             },
             # Support: @@@HALT_ON_FAILURE@@@ (halt if a step fails immediately)
             {
-                're'    : AnnotationObserver._re_halt_on_failure,
+                're'    : AnnotationObserver_._re_halt_on_failure,
                 'op'    : lambda args: (
                     logging.msg("+++ op: HALT_ON_FAILURE"),
                     self.setHaltOnFailure(True)
@@ -338,7 +340,7 @@ class AnnotationObserver(buildstep.LogLineObserver):
             # Support: @@@HONOR_ZERO_RETURN_CODE@@@ (succeed on 0 return, even if some
             #     steps have failed)
             {
-                're'    : AnnotationObserver._re_honor_zero_rc,
+                're'    : AnnotationObserver_._re_honor_zero_rc,
                 'op'    : lambda args: (
                     logging.msg("+++ op: HONOR_ZERO_RC"),
                     self.setHonorZeroReturnCode(True)
@@ -346,7 +348,7 @@ class AnnotationObserver(buildstep.LogLineObserver):
             },
             # Support: @@@STEP_CLEAR@@@ (reset step description)
             {
-                're'    : AnnotationObserver._re_step_clear,
+                're'    : AnnotationObserver_._re_step_clear,
                 'op'    : lambda args: (
                     logging.msg("+++ op: STEP_CLEAR"),
                     self.queue_op(op=lambda: self.op_updateStepText(text=None),
@@ -355,7 +357,7 @@ class AnnotationObserver(buildstep.LogLineObserver):
             },
             # Support: @@@STEP_SUMMARY_CLEAR@@@ (reset step summary)
             {
-                're'    : AnnotationObserver._re_step_summary_clear,
+                're'    : AnnotationObserver_._re_step_summary_clear,
                 'op'    : lambda args: (
                     logging.msg("+++ op: STEP_SUMMARY_CLEAR"),
                     self.queue_op(op=lambda: self.op_updateStepSummaryInfo(text=None),
@@ -364,7 +366,7 @@ class AnnotationObserver(buildstep.LogLineObserver):
             },
             # Support: @@@STEP_TEXT@<msg>@@@
             {
-                're'    : AnnotationObserver._re_step_text,
+                're'    : AnnotationObserver_._re_step_text,
                 'op'    : lambda args: (
                     logging.msg("+++ op: STEP_TEXT"),
                     self.queue_op(op=lambda: self.op_updateStepText(text=args['text']),
@@ -373,7 +375,7 @@ class AnnotationObserver(buildstep.LogLineObserver):
             },
             # Support: @@@STEP_SUMMARY_TEXT@<msg>@@@
             {
-                're'    : AnnotationObserver._re_step_summary_step,
+                're'    : AnnotationObserver_._re_step_summary_step,
                 'op'    : lambda args: (
                     logging.msg("+++ op: STEP_SUMMARY_TEXT"),
                     self.queue_op(op=lambda: self.op_updateStepSummaryInfo(text=args['text']),
@@ -382,7 +384,7 @@ class AnnotationObserver(buildstep.LogLineObserver):
             },
             # Support: @@@BUILD_STEP <step_name>@@@ (start a new section)
             {
-                're'    : AnnotationObserver._re_build_step,
+                're'    : AnnotationObserver_._re_build_step,
                 'op'    : lambda args: (
                     logging.msg("+++ op: BUILD_STEP"),
                     self.queue_op(op=lambda: self.op_fixupActiveStep(),
@@ -402,7 +404,12 @@ class AnnotationObserver(buildstep.LogLineObserver):
         if op is not None:
             self._delayed_op_queue.append(op)
         if self._proc_op_in_queue is None and len(self._delayed_op_queue) > 0:
-            self._queue_catchup_all()
+            #self._queue_catchup_all()
+            self._queue_catchup_locked()
+
+    @defer.inlineCallbacks
+    def _queue_catchup_locked(self):
+        yield self._dlock.run(self._queue_catchup_all)
 
     @defer.inlineCallbacks
     def _queue_catchup_all(self):
@@ -435,18 +442,17 @@ class AnnotationObserver(buildstep.LogLineObserver):
         logging.msg(">>> queue_wait: buildid={0}".format(
                     self.command.build.buildid))
 
-        dop = self._proc_op_in_queue
-        while dop:
-            unhandled_results = yield defer.DeferredList([dop],
-                                                         consumeErrors=True)
-            for success, res in unhandled_results:
-                if not success:
-                    logging.err(res,
-                                "from an AnnotationObserver::queue_wait method executed for "
-                                "buildid: %s" % self.command.build.buildid)
-                    self.annotate_status = builder.EXCEPTION
-            dop = self._proc_op_in_queue
-
+        yield self._queue_catchup_locked()
+        """
+        if self._proc_op_in_queue:
+            logging.msg(">>> queue_wait: buildid={0}, processing defer".format(
+                    self.command.build.buildid))
+        if len(self._delayed_op_queue) == 0:
+            logging.msg(">>> queue_wait: buildid={0}, empty op queue".format(
+                    self.command.build.buildid))
+        if self._proc_op_in_queue is None and len(self._delayed_op_queue) > 0:
+            yield self._queue_catchup_all()
+        """
     def queue_clean(self):
         self._delayed_op_queue = []
 
@@ -644,7 +650,7 @@ class AnnotationObserver(buildstep.LogLineObserver):
                           name="handleReturnCode.fixupActiveStep(FAILURE)")
 
 
-class AnnotatedCommand(ProcessLogShellStep):
+class AnnotatedCommand_(ProcessLogShellStep):
     """Buildbot command that knows how to display annotations."""
 
     # pylint: disable=too-many-ancestors
@@ -671,7 +677,7 @@ class AnnotatedCommand(ProcessLogShellStep):
         kwargs['env'] = env
 
         ProcessLogShellStep.__init__(self, *args, **kwargs)
-        self.script_observer = AnnotationObserver(self)
+        self.script_observer = AnnotationObserver_(self)
         self.addLogObserver('stdio', self.script_observer)
         self.preamble_log = None
 
@@ -679,20 +685,305 @@ class AnnotatedCommand(ProcessLogShellStep):
     def start(self):
         # Create a preamble log for primary annotate step.
         self.preamble_log = yield self.addLog('preamble')
-        ProcessLogShellStep.start(self)
+        r = ProcessLogShellStep.start(self)
+        #TODO:VV:
+        yield self.script_observer.queue_wait()
+        return r
 
     def interrupt(self, reason):
+        logging.msg(">>> AnnotatedCommand::interrupt: buildid=%s" % self.build.buildid)
         self.script_observer.op_fixupActiveStep(status=builder.EXCEPTION)
-        self.script_observer.queue_wait()
+        #TODO:VV:self.script_observer.queue_wait()
         return ProcessLogShellStep.interrupt(self, reason)
 
     def evaluateCommand(self, cmd):
+        logging.msg(">>> AnnotatedCommand::evaluateCommand: buildid=%s" % self.build.buildid)
         observer_result = self.script_observer.annotate_status
         # Check if ProcessLogShellStep detected a failure or warning also.
         log_processor_result = ProcessLogShellStep.evaluateCommand(self, cmd)
         return BuilderStatus.combine(observer_result, log_processor_result)
 
     def commandComplete(self, cmd):
+        logging.msg(">>> AnnotatedCommand::commandComplete: buildid=%s" % self.build.buildid)
         self.script_observer.handleReturnCode(cmd.rc)
-        self.script_observer.queue_wait()
+        #TODO:VV:self.script_observer.queue_wait()
         return ProcessLogShellStep.commandComplete(self, cmd)
+
+
+####
+
+
+class AnnotationObserver(buildstep.LogLineObserver):
+    """This class knows how to understand annotations.
+
+    Here are a list of the currently supported annotations:
+
+    @@@BUILD_STEP <stepname>@@@
+    Add a new step <stepname>. End the current step, marking with last available
+    status.
+
+    @@@STEP_LINK@<label>@<url>@@@
+    Add a link with label <label> linking to <url> to the current stage.
+
+    @@@STEP_WARNINGS@@@
+    Mark the current step as having warnings (oragnge).
+
+    @@@STEP_FAILURE@@@
+    Mark the current step as having failed (red).
+
+    @@@STEP_EXCEPTION@@@
+    Mark the current step as having exceptions (magenta).
+
+    @@@STEP_CLEAR@@@
+    Reset the text description of the current step.
+
+    @@@STEP_SUMMARY_CLEAR@@@
+    Reset the text summary of the current step.
+
+    @@@STEP_TEXT@<msg>@@@
+    Append <msg> to the current step text.
+
+    @@@STEP_SUMMARY_TEXT@<msg>@@@
+    Append <msg> to the step summary (appears on top of the waterfall).
+
+    @@@HALT_ON_FAILURE@@@
+    Halt if exception or failure steps are encountered (default is not).
+
+    @@@HONOR_ZERO_RETURN_CODE@@@
+    Honor the return code being zero (success), even if steps have other results.
+
+    Deprecated annotations:
+    TODO(bradnelson): drop these when all users have been tracked down.
+
+    @@@BUILD_WARNINGS@@@
+    Equivalent to @@@STEP_WARNINGS@@@
+
+    @@@BUILD_FAILED@@@
+    Equivalent to @@@STEP_FAILURE@@@
+
+    @@@BUILD_EXCEPTION@@@
+    Equivalent to @@@STEP_EXCEPTION@@@
+
+    @@@link@<label>@<url>@@@
+    Equivalent to @@@STEP_LINK@<label>@<url>@@@
+    """
+
+    _re_step_link           = re.compile(r'^@@@(STEP_LINK|link)@(?P<link_label>.*)@(?P<link_url>.*)@@@', re.M)
+    _re_step_warnings       = re.compile(r'^@@@(STEP_WARNINGS|BUILD_WARNINGS)@@@', re.M)
+    _re_step_failure        = re.compile(r'^@@@(STEP_FAILURE|BUILD_FAILED)@@@', re.M)
+    _re_step_exception      = re.compile(r'^@@@(STEP_EXCEPTION|BUILD_EXCEPTION)@@@', re.M)
+    _re_halt_on_failure     = re.compile(r'^@@@HALT_ON_FAILURE@@@', re.M)
+    _re_honor_zero_rc       = re.compile(r'^@@@HONOR_ZERO_RETURN_CODE@@@', re.M)
+    _re_step_clear          = re.compile(r'^@@@STEP_CLEAR@@@', re.M)
+    _re_step_summary_clear  = re.compile(r'^@@@STEP_SUMMARY_CLEAR@@@', re.M)
+    _re_step_text           = re.compile(r'^@@@STEP_TEXT@(?P<text>.*)@@@', re.M)
+    _re_step_summary_step   = re.compile(r'^@@@STEP_SUMMARY_TEXT@(?P<text>.*)@@@', re.M)
+    _re_build_step          = re.compile(r'^@@@BUILD_STEP (?P<name>.*)@@@', re.M)
+
+    def __init__(self, command=None, *args, **kwargs):
+        buildstep.LogLineObserver.__init__(self, *args, **kwargs)
+        self.command = command
+        self.annotate_status = builder.SUCCESS
+        self.halt_on_failure = False
+        self.honor_zero_return_code = False
+        self.active_log = None
+
+        self._re_set = [
+            # Support: @@@STEP_LINK@<name>@<url>@@@ (emit link)
+            # Also support depreceated @@@link@<name>@<url>@@@
+            {
+                're'    : AnnotationObserver._re_step_link,
+                'op'    : lambda args: self.command.addURL(args['link_label'], args['link_url'])
+            },
+            # Support: @@@STEP_WARNINGS@@@ (warn on a stage)
+            # Also support deprecated @@@BUILD_WARNINGS@@@
+             {
+                're'    : AnnotationObserver._re_step_warnings,
+                'op'    : lambda args: self.update_status(builder.WARNINGS)
+            },
+            # Support: @@@STEP_FAILURE@@@ (fail a stage)
+            # Also support deprecated @@@BUILD_FAILED@@@
+            {
+                're'    : AnnotationObserver._re_step_failure,
+                'op'    : lambda args: self.update_status(builder.FAILURE)
+            },
+            # Support: @@@STEP_EXCEPTION@@@ (exception on a stage)
+            # Also support deprecated @@@BUILD_FAILED@@@
+            {
+                're'    : AnnotationObserver._re_step_exception,
+                'op'    : lambda args: self.update_status(builder.EXCEPTION)
+            },
+            # Support: @@@HALT_ON_FAILURE@@@ (halt if a step fails immediately)
+            {
+                're'    : AnnotationObserver._re_halt_on_failure,
+                'op'    : lambda args: self.set_halt_on_failure(True)
+            },
+            # Support: @@@HONOR_ZERO_RETURN_CODE@@@ (succeed on 0 return, even if some
+            #     steps have failed)
+            {
+                're'    : AnnotationObserver._re_honor_zero_rc,
+                'op'    : lambda args: self.set_honor_zero_return_code(True)
+            },
+            # Support: @@@STEP_CLEAR@@@ (reset step description)
+            {
+                're'    : AnnotationObserver._re_step_clear,
+                'op'    : lambda args: args
+            },
+            # Support: @@@STEP_SUMMARY_CLEAR@@@ (reset step summary)
+            {
+                're'    : AnnotationObserver._re_step_summary_clear,
+                'op'    : lambda args: args
+            },
+            # Support: @@@STEP_TEXT@<msg>@@@
+            {
+                're'    : AnnotationObserver._re_step_text,
+                'op'    : lambda args: args # args['text']
+            },
+            # Support: @@@STEP_SUMMARY_TEXT@<msg>@@@
+            {
+                're'    : AnnotationObserver._re_step_summary_step,
+                'op'    : lambda args: args # args['text']
+            },
+            # Support: @@@BUILD_STEP <step_name>@@@ (start a new section)
+            {
+                're'    : AnnotationObserver._re_build_step,
+                'op'    : lambda args: self.start_new_section(args['name'], args['logline'])
+            },
+        ]
+
+    def errLineReceived(self, line):
+        self.outLineReceived(line)
+
+    def outLineReceived(self, line):
+        """This is called once with each line of the test log."""
+
+        # returns: opname, op, args
+        def parse_annotate_cmd(ln):
+            for k in self._re_set:
+                ro = k['re'].search(ln)
+                if ro is not None:
+                    # Get the regex named group values.
+                    # We can get the empty set, but it is ok.
+                    args = ro.groupdict()
+                    # No need actually, but just in case.
+                    if args is None:
+                        args = {}
+                    # Store the current log line within the arguments.
+                    # We will need to save it in some cases.
+                    args['logline'] = ln
+                    return k['op'], args
+            return None, None
+
+        # Add \n if not there, which seems to be the case for log lines from
+        # windows agents, but not others.
+        if not line.endswith('\n'):
+            line += '\n'
+
+        op, args = parse_annotate_cmd(line)
+        if op is not None:
+            try:
+                op(args)
+            except Exception:
+                logging.msg("Exception occurs while processing annotated command: "
+                            "op=%r, args=%s." % (op, args))
+                logging.err()
+        else:
+            # Add to the current log.
+            if self.active_log is not None:
+                self.active_log.addStdout(line)
+            elif self.command.preamble_log is not None:
+                self.command.preamble_log.addStdout(line)
+
+    def handleReturnCode(self, return_code):
+        # Treat all non-zero return codes as failure.
+        # We could have a special return code for warnings/exceptions, however,
+        # this might conflict with some existing use of a return code.
+        # Besides, applications can always intercept return codes and emit
+        # STEP_* tags.
+        if return_code == 0:
+            self.finalize_annotation()
+            if self.honor_zero_return_code:
+                self.annotate_status = builder.SUCCESS
+        else:
+            self.annotate_status = builder.FAILURE
+            self.finalize_annotation(status=builder.FAILURE)
+
+    def set_halt_on_failure(self, v):
+        self.halt_on_failure = v
+
+    def set_honor_zero_return_code(self, v):
+        self.honor_zero_return_code = v
+
+    def start_new_section(self, name, line):
+        if self.active_log is not None:
+            self.active_log.finish()
+        self.active_log = self.command.addLog(name.strip())
+        self.active_log.addStdout(line)
+                    
+    # Updating a status for the currently active step.
+    def update_status(self, status):
+        self.annotate_status = BuilderStatus.combine(self.annotate_status, status)
+
+        if self.halt_on_failure and status in [builder.FAILURE, builder.EXCEPTION]:
+            self.finalize_annotation(status)
+            self.command.finished(status)
+
+    def finalize_annotation(self, status=None):
+        if status is not None:
+            self.annotate_status = BuilderStatus.combine(self.annotate_status, status)
+        if self.active_log is not None:
+            self.active_log.finish()
+            self.active_log = None
+
+class AnnotatedCommand(shell.ShellCommand):
+    """Buildbot command that knows how to display annotations."""
+
+    # pylint: disable=too-many-ancestors
+    def __init__(self, *args, **kwargs):
+        # Inject standard tags into the environment.
+        env = {
+            'BUILDBOT_BLAMELIST':       util.Interpolate('%(prop:blamelist:-[])s'),
+            'BUILDBOT_BRANCH':          util.Interpolate('%(prop:branch:-None)s'),
+            'BUILDBOT_BUILDERNAME':     util.Interpolate('%(prop:buildername:-None)s'),
+            'BUILDBOT_BUILDNUMBER':     util.Interpolate('%(prop:buildnumber:-None)s'),
+            'BUILDBOT_CLOBBER':         util.Interpolate('%(prop:clobber:+1)s'),
+            'BUILDBOT_GOT_REVISION':    util.Interpolate('%(prop:got_revision:-None)s'),
+            'BUILDBOT_REVISION':        util.Interpolate('%(prop:revision:-None)s'),
+            'BUILDBOT_SCHEDULER':       util.Interpolate('%(prop:scheduler:-None)s'),
+            'BUILDBOT_SLAVENAME':       util.Interpolate('%(prop:slavename:-None)s'),
+            'BUILDBOT_MSAN_ORIGINS':    util.Interpolate('%(prop:msan_origins:-)s'),
+        }
+        # Apply the passed in environment on top.
+        old_env = kwargs.get('env')
+        if not old_env:
+            old_env = {}
+        env.update(old_env)
+        # Change passed in args (ok as a copy is made internally).
+        kwargs['env'] = env
+
+        shell.ShellCommand.__init__(self, *args, **kwargs)
+        self.script_observer = AnnotationObserver(self)
+        self.addLogObserver('stdio', self.script_observer)
+        self.preamble_log = None
+
+    def start(self):
+        # Create a preamble log for primary annotate step.
+        self.preamble_log = self.addLog('preamble')
+        shell.ShellCommand.start(self)
+
+    def interrupt(self, reason):
+        logging.msg(">>> AnnotatedCommand::interrupt: buildid=%s" % self.build.buildid)
+        self.script_observer.finalize_annotation(status=builder.EXCEPTION)
+        return shell.ShellCommand.interrupt(self, reason)
+
+    def evaluateCommand(self, cmd):
+        logging.msg(">>> AnnotatedCommand::evaluateCommand: buildid=%s" % self.build.buildid)
+        observer_result = self.script_observer.annotate_status
+        # Check if shell.ShellCommand detected a failure or warning also.
+        log_processor_result = shell.ShellCommand.evaluateCommand(self, cmd)
+        return BuilderStatus.combine(observer_result, log_processor_result)
+
+    def commandComplete(self, cmd):
+        logging.msg(">>> AnnotatedCommand::commandComplete: buildid=%s" % self.build.buildid)
+        self.script_observer.handleReturnCode(cmd.rc)
+        return shell.ShellCommand.commandComplete(self, cmd)
