@@ -25,7 +25,7 @@ def collapseRequests(master, builder, req1, req2):
                         for ss in selfBuildsets['sourcestamps'])
     otherSources = dict((ss['codebase'], ss)
                         for ss in otherBuildsets['sourcestamps'])
-    log.msg(">>> collapseRequests: sourcestamps self=%s and other=%s" % (selfSources, otherSources))
+    #log.msg(">>> collapseRequests: sourcestamps self=%s and other=%s" % (selfSources, otherSources))
 
     # if the sets of codebases do not match, we can't collapse
     if set(selfSources) != set(otherSources):
@@ -38,7 +38,7 @@ def collapseRequests(master, builder, req1, req2):
             return False
 
         if selfSS['branch'] != otherSS['branch']:
-            log.msg("   >>> collapseRequests: Returns false, as branches do not match.")
+            #log.msg("   >>> collapseRequests: Returns false, as branches do not match.")
             return False
 
         # TODO: Handle projects matching if we ever would have
@@ -76,8 +76,8 @@ def collapseRequests(master, builder, req1, req2):
 
     # Build requests with different reasons should be built separately.
     if req1.get('reason', None) == req2.get('reason', None):
-        log.msg("   >>> collapseRequests: Can collapse requests %s and %s" % (req1, req2))
+        #log.msg("   >>> collapseRequests: Can collapse requests %s and %s" % (req1, req2))
         return True
     else:
-        log.msg("   >>> collapseRequests: Returns false, as reasons do not match for %s and %s" % (req1, req2))
+        #log.msg("   >>> collapseRequests: Returns false, as reasons do not match for %s and %s" % (req1, req2))
         return False

@@ -40,7 +40,7 @@ class NinjaCommand(WarningCountingShellCommand):
 
     def __init__(self, options=None, targets=None, ninja=DEFAULT_NINJA, logObserver=None, **kwargs):
         # TODO: For debug purposes. Remove this later.
-        log.msg(">>> NinjaCommand: __init__(options=%s, targets=%s, ninja=%s,kwargs=%s)" % (options,targets,ninja,kwargs))
+        #log.msg(">>> NinjaCommand: __init__(options=%s, targets=%s, ninja=%s,kwargs=%s)" % (options,targets,ninja,kwargs))
         self.ninja = ninja
         self.targets = targets
 
@@ -113,5 +113,5 @@ class NinjaCommand(WarningCountingShellCommand):
         # which we could get if Interpolate rendered to empty strings.
         kwargs['command'] = [cmd for cmd in kwargs['command'] if cmd]
         # TODO: For debug purposes. Remove this later.
-        log.msg(">>> NinjaCommand: kwargs=%s" % kwargs)
+        #log.msg(">>> NinjaCommand: kwargs=%s" % kwargs)
         return kwargs

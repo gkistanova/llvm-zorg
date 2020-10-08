@@ -26,7 +26,7 @@ class LitLogObserver(LogLineObserver):
   kStartSummaryRE = re.compile(r'^Failing Tests \(\d*\)$')
 
   def __init__(self, maxLogs=None, parseSummaryOnly=False):
-    log.msg(">>> LitLogObserver._init__(maxLogs=%s, parseSummaryOnly=%s)" % (maxLogs, parseSummaryOnly))
+    #log.msg(">>> LitLogObserver._init__(maxLogs=%s, parseSummaryOnly=%s)" % (maxLogs, parseSummaryOnly))
     super().__init__()
     self.resultCounts = {}
     self.maxLogs = maxLogs
@@ -159,7 +159,7 @@ class LitTestCommand(Test):
 
   def __init__(self, ignore=[], flaky=[], max_logs=20, parseSummaryOnly=False,
                *args, **kwargs):
-    log.msg(">>> LitTestCommand._init__(ignore=%s,flaky=%s,max_logs=%s,parseSummaryOnly=%s,kwargs=%s)" % (ignore, flaky, max_logs, parseSummaryOnly, kwargs))
+    #log.msg(">>> LitTestCommand._init__(ignore=%s,flaky=%s,max_logs=%s,parseSummaryOnly=%s,kwargs=%s)" % (ignore, flaky, max_logs, parseSummaryOnly, kwargs))
     super().__init__(*args, **kwargs)
     self.maxLogs = int(max_logs)
     self.logObserver = LitLogObserver(self.maxLogs, parseSummaryOnly)
