@@ -370,10 +370,9 @@ def getClangWithLTOBuildFactory(
 
         # Only if the compare-compilers step has failed.
         def _prevStepFailed(step):
-            steps = step.build.getStatus().getSteps()
+            steps = step.build.executedSteps
             prev_step = steps[-2]
-            (result, _) = prev_step.getResults()
-            return (result == FAILURE)
+            return (prev_step.results == FAILURE)
 
         dir1 = f.stage_objdirs[-2]
         dir2 = f.stage_objdirs[-1]
