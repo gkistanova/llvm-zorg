@@ -1,3 +1,7 @@
+# Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
 # TODO: Reconsile builders with explicitly set schedulers detection.
 
 from twisted.python import log
@@ -10,13 +14,10 @@ from buildbot.plugins import schedulers, util
 # affects, and we want to schedule a build if one of them is
 # at interest.
 def isProjectOfInterest(cp, projects_of_interest):
-    #log.msg(">>> isProjectOfInterest: filter \"%s\" for projects_of_interest %s" % (cp, projects_of_interest))
     if cp:
         changed_projects = frozenset(cp.split(','))
         if changed_projects.intersection(projects_of_interest):
-            #log.msg("    >>> isProjectOfInterest returns True")
             return True
-    #log.msg("    >>> isProjectOfInterest returns False")
     return False
 
 
@@ -96,7 +97,6 @@ def getSingleBranchSchedulers(
 # TODO: Move these settings to the configuration file.
 _repourl = "https://github.com/llvm/llvm-project"
 _branch = "master"
-_project = "llvm"
 
 def getForceSchedulers(builders):
     # Walk over all builders and collect their names.
@@ -140,7 +140,7 @@ def getForceSchedulers(builders):
                         ),
                         project     = util.FixedParameter(
                             name        = "project",
-                            default     = _project
+                            default     = "llvm" # All projects depend on llvm
                         )
                     )
                 ],
