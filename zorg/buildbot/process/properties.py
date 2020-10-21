@@ -2,12 +2,11 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#pylint: disable=invalid-name
-
 from zope.interface import implementer
 
 from buildbot.interfaces import IRenderable
 from buildbot.process.properties import WithProperties
+
 
 @implementer(IRenderable)
 class InterpolateToNativePath(WithProperties):
