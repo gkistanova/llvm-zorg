@@ -1,8 +1,9 @@
+# Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
 # TODO: Use Interpolate instead of WithProperties.
 import re
-
-# TODO: For debug purposes. Remove this later.
-from twisted.python import log
 
 from buildbot.process.properties import WithProperties
 from buildbot.steps.shell import WarningCountingShellCommand
@@ -39,8 +40,6 @@ class NinjaCommand(WarningCountingShellCommand):
     )
 
     def __init__(self, options=None, targets=None, ninja=DEFAULT_NINJA, logObserver=None, **kwargs):
-        # TODO: For debug purposes. Remove this later.
-        #log.msg(">>> NinjaCommand: __init__(options=%s, targets=%s, ninja=%s,kwargs=%s)" % (options,targets,ninja,kwargs))
         self.ninja = ninja
         self.targets = targets
 
@@ -112,6 +111,4 @@ class NinjaCommand(WarningCountingShellCommand):
         # Remove all the empty items from the command list,
         # which we could get if Interpolate rendered to empty strings.
         kwargs['command'] = [cmd for cmd in kwargs['command'] if cmd]
-        # TODO: For debug purposes. Remove this later.
-        #log.msg(">>> NinjaCommand: kwargs=%s" % kwargs)
         return kwargs
