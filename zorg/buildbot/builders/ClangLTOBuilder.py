@@ -82,8 +82,6 @@ def _addSteps4SystemCompiler(
                            path=src_dir,
                            env=env,
                            workdir=obj_dir,
-                           # TODO: Double check this:
-                           #doStepIf=FileDoesNotExist("CMakeCache.txt")
                            ))
 
     # Build clang by the system compiler
@@ -195,8 +193,6 @@ def _addSteps4StagedCompiler(
                            path=src_dir,
                            env=env,
                            workdir=obj_dir,
-                           # TODO: Double check this:
-                           #doStepIf=FileDoesNotExist("CMakeCache.txt")
                            ))
 
     # Build clang by the staged compiler
