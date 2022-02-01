@@ -100,10 +100,17 @@ class LLVMMessageFormatter(reporters.MessageFormatter):
         ctx.update(self.ctx)
         ctx.update(get_log_details(ctx["build"]))
 
-LLVMInformativeMailNotifier = LLVMMessageFormatter(
-    template=MAIL_TEMPLATE,
-    template_type="plain",
-    wantLogs=True,
-    wantProperties=True,
-    wantSteps=True,
+LLVMInformativeMailGenerator = reporters.BuildStatusGenerator(
+        mode=('problem',),
+        message_formatter = LLVMMessageFormatter(
+            template=MAIL_TEMPLATE,
+            template_type="plain",
+            want_logs=True,
+            want_properties=True,
+            want_steps=True,
+        )
 )
+
+class LLVMDefaultBuildStatusGenerator(reporters.BuildStatusGenerator):
+    def __init__(self, mode = "failing", subject = "Build Failure: %(builder)s", **kwargs):
+        super().__init__(mode, subject, **kwargs)
