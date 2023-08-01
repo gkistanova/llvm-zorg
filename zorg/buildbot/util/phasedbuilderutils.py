@@ -20,8 +20,7 @@ class NamedTrigger(Trigger):
         Trigger.__init__(self, **kwargs)
         self.name = name
         self.triggeredBuilders = triggeredBuilders
-        self.addFactoryArguments(name = name,
-                                 triggeredBuilders = triggeredBuilders)
+
     def start(self):
         # Add a log linking to the triggered builders, if supplied.
         if self.triggeredBuilders:
