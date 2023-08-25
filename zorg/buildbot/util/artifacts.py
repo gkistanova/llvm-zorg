@@ -3,7 +3,7 @@ import os
 import buildbot
 import config
 
-from buildbot.steps.shell import WithProperties
+from buildbot.plugins import util
 from zorg.buildbot.util.phasedbuilderutils import setProperty, determine_phase_id
 from zorg.buildbot.util.phasedbuilderutils import set_config_option
 
@@ -16,8 +16,8 @@ if is_production:
                                     'localhost')
     master_protocol = set_config_option('Master Options', 
                                         'master_protocol', 'http')
-    base_download_url = '%s://%s/artifacts' % (master_protocol, master_name)
-    base_package_url = '%s://%s/packages' % (master_protocol, master_name)
+    base_download_url = f'{master_protocol}://{master_name}/artifacts'
+    base_package_url = f'{master_protocol}://{master_name}/packages'
     package_url = set_config_option('Master Options', 'package_url',
                                     base_package_url)
     artifacts_path = set_config_option('Master Options', 'artifacts_path',
@@ -29,12 +29,12 @@ else:
     rsync_user = getpass.getuser()
     master_name = 'localhost'
     master_protocol = 'http'
-    base_download_url = 'http://%s/~%s/artifacts' % (master_name, rsync_user)
-    package_url = 'http://%s/~%s/packages' % (master_name, rsync_user)
+    base_download_url = f'http://{master_name}/~{rsync_user}/artifacts'
+    package_url = f'http://{master_name}/~{rsync_user}/packages'
     artifacts_path = os.path.expanduser('~/artifacts')
     curl_flags = '-fvLo'
 
-base_rsync_path = '%s@%s:%s' % (rsync_user, master_name, artifacts_path)
+base_rsync_path = f'{rsync_user}@{master_name}:{artifacts_path}'
 
 # This method is used in determining the name of a given compiler archive
 def _determine_compiler_kind(props):
@@ -106,19 +106,19 @@ def GetCompilerRoot(f):
             name='rm.host-compiler',
             command=['rm', '-rfv', 'host-compiler', 'host-compiler.tar.gz'],
             haltOnFailure=False, description=['rm', 'host-compiler'],
-            workdir=WithProperties('%(builddir)s')))
+            workdir=util.Property('builddir')))
     setProperty(f, 'rootURL', 
-                WithProperties( base_download_url + '/%(getpath)s/%(getname)s',
+                util.Interpolate(f'{base_download_url}/%(kw:getpath)s/%(kw:getname)s',
                                getpath=_determine_compiler_path,
                                getname=_determine_archive_name))
     # curl down the archive
     f.addStep(buildbot.steps.shell.ShellCommand(
               name='download.artifacts',
               command=['curl', curl_flags, 'host-compiler.tar.gz',
-                       WithProperties('%(rootURL)s')],
+                       util.Property('rootURL')],
               haltOnFailure=True,
               description=['download build artifacts'],
-              workdir=WithProperties('%(builddir)s')))
+              workdir=util.Property('builddir')))
     # extract the compiler root from the archive
     f.addStep(buildbot.steps.shell.ShellCommand(
               name='unzip', command=['tar', '-zxvf','../host-compiler.tar.gz'],
@@ -128,10 +128,10 @@ def GetCompilerRoot(f):
 
 def uploadArtifacts(f, rootdir='clang-install'):
     #phase_id is required to make sure that path to archives are deterministic.
-    setProperty(f, 'phase_id', WithProperties('%(get_phase_id)s',
+    setProperty(f, 'phase_id', util.Interpolate('%(kw:get_phase_id)s',
                 get_phase_id = determine_phase_id))
     # we always create/name a compiler archive based on the same criteria
-    archive_path = WithProperties('%(builddir)s/%(getname)s',
+    archive_path = util.Interpolate('%(prop:builddir)s/%(kw:getname)s',
                                   getname=_determine_archive_name)
     if rootdir.endswith('install'):
         cit_path = 'clang-build/**/bin/c-index-test'
@@ -140,22 +140,22 @@ def uploadArtifacts(f, rootdir='clang-install'):
                   name='add.cit', haltOnFailure=True,
                   command = ['sh', '-c', copy_command],
                   description=['add c-index-test to root'],
-                  workdir=WithProperties('%(builddir)s')))
+                  workdir=util.Property('builddir')))
     f.addStep(buildbot.steps.shell.ShellCommand(
               name='tar.and.zip', haltOnFailure=True,
               command=['tar', '-czv', '--exclude', '.svn', '-f', archive_path, './'],
               description=['tar', '&', 'zip'], workdir=rootdir))
     # Upload the archive.
-    archive_dest = WithProperties(base_rsync_path +'/%(getpath)s/',
+    archive_dest = util.Interpolate(f'{base_rsync_path}/%(kw:getpath)s/',
                                   getpath=_determine_compiler_path)
     f.addStep(buildbot.steps.shell.ShellCommand(
               name='upload.artifacts', haltOnFailure=True,
               command=['rsync', '-pave', 'ssh', archive_path, archive_dest],
               description=['upload build artifacts'],
-              workdir=WithProperties('%(builddir)s')))
+              workdir=util.Property('builddir')))
     # Set the artifact URL in a property for easy access from the build log.
-    download_str = base_download_url + '/%(getpath)s/%(getname)s'
-    artifactsURL = WithProperties(download_str, getpath=_determine_compiler_path,
+    download_str = f'{base_download_url}/%(kw:getpath)s/%(kw:getname)s'
+    artifactsURL = util.Interpolate(download_str, getpath=_determine_compiler_path,
                                   getname=_determine_archive_name)
     setProperty(f, 'artifactsURL', artifactsURL)
     return f
@@ -191,13 +191,13 @@ def GetCompilerArtifacts(f):
             name='rm.host-compiler',
             command=['rm', '-rfv', 'host-compiler', 'host-compiler.tar.gz'],
             haltOnFailure=False, description=['rm', 'host-compiler'],
-            workdir=WithProperties('%(builddir)s')))
+            workdir=util.Property('builddir')))
     f.addStep(buildbot.steps.shell.ShellCommand(
               name='download.artifacts',
               command=['curl', curl_flags, 'host-compiler.tar.gz',
-                       WithProperties('%(get_curl)s', get_curl=determine_url)],
+                       util.Interpolate('%(kw:get_curl)s', get_curl=determine_url)],
               haltOnFailure=True, description=['download build artifacts'],
-              workdir=WithProperties('%(builddir)s')))
+              workdir=util.Property('builddir')))
     f.addStep(buildbot.steps.shell.ShellCommand(
               name='unzip', command=['tar', '-zxvf','../host-compiler.tar.gz'],
               haltOnFailure=True, description=['extract', 'host-compiler'],
@@ -217,7 +217,7 @@ def GetCCFromCompilerArtifacts(f, base_dir):
         name='find.cc',
         command=['find', base_dir, '-name', 'clang'],
         extract_fn=get_cc,
-        workdir=WithProperties('%(builddir)s')))
+        workdir=util.Property('builddir')))
     return f
 
 def GetCXXFromCompilerArtifacts(f, base_dir):
@@ -233,6 +233,6 @@ def GetCXXFromCompilerArtifacts(f, base_dir):
         name='find.cxx',
         command=['find', base_dir, '-name', 'clang++'],
         extract_fn=get_cxx,
-        workdir=WithProperties('%(builddir)s')))
+        workdir=util.Property('builddir')))
     return f
 

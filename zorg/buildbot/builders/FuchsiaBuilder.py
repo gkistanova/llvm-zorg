@@ -1,8 +1,7 @@
 import platform
 
-from buildbot.process.properties import WithProperties
 from buildbot.steps.shell import ShellCommand
-from buildbot.plugins import steps
+from buildbot.plugins import steps, util
 
 from zorg.buildbot.builders import UnifiedTreeBuilder
 from zorg.buildbot.commands.CmakeCommand import CmakeCommand
@@ -52,9 +51,9 @@ def getFuchsiaToolchainBuildFactory(
     }[platform.system()]
     sdk_version = "latest"
 
-    sdk_url = WithProperties(
+    sdk_url = util.Interpolate(
         "https://chrome-infra-packages.appspot.com/dl/"
-        "fuchsia/sdk/%(sdk_platform)s/+/%(sdk_version)s",
+        "fuchsia/sdk/%(kw:sdk_platform)s/+/%(kw:sdk_version)s",
         sdk_platform=lambda _: sdk_platform,
         sdk_version=lambda _: sdk_version)
 
@@ -103,21 +102,21 @@ def getFuchsiaToolchainBuildFactory(
         ])
 
     cmake_options.append(
-        WithProperties(
-            "-DCMAKE_INSTALL_PREFIX=%(builddir)s/" + install_dir
+        util.Interpolate(
+            f"-DCMAKE_INSTALL_PREFIX=%(prop:builddir)s/{install_dir}"
         ))
     cmake_options.append(
-        WithProperties(
-            "-DFUCHSIA_SDK=%(builddir)s/" + sdk_dir
+        util.Interpolate(
+            f"-DFUCHSIA_SDK=%(prop:builddir)s/{sdk_dir}"
         ))
 
     CmakeCommand.applyRequiredOptions(cmake_options, [
-        ("-C", "../" + src_dir + "/clang/cmake/caches/Fuchsia.cmake"),
+        ("-C", f"../{src_dir}/clang/cmake/caches/Fuchsia.cmake"),
         ])
 
     f.addStep(CmakeCommand(name="cmake-configure",
                            options=cmake_options,
-                           path='../' + src_dir + '/llvm',
+                           path=f'../{src_dir}/llvm',
                            haltOnFailure=True,
                            description=["configure"],
                            workdir=obj_dir,
@@ -134,7 +133,7 @@ def getFuchsiaToolchainBuildFactory(
 
     # Test llvm, clang and lld.
     f.addStep(NinjaCommand(name="check",
-                           targets=["stage2-check-%s" % p for p in ("llvm", "clang", "lld")],
+                           targets=[f"stage2-check-{p}" for p in ("llvm", "clang", "lld")],
                            haltOnFailure=True,
                            description=["check"],
                            workdir=obj_dir,
