@@ -3,9 +3,9 @@ import json
 import os 
 import StringIO
 
+from buildbot.plugins import util
 from buildbot.steps.master import MasterShellCommand
 from buildbot.steps.shell import SetProperty
-from buildbot.steps.shell import WithProperties
 from buildbot.steps.trigger import Trigger
 from datetime import datetime, date, time
 
@@ -123,14 +123,14 @@ def GetLatestValidated(f):
             name='rm.host-compiler',
             command=['rm', '-rfv', 'host-compiler', 'host-compiler.tar.gz'],
             haltOnFailure=False, description=['rm', 'host-compiler'],
-            workdir=WithProperties('%(builddir)s')))
+            workdir=util.Property('builddir')))
     latest_url = artifacts.base_download_url
     latest_url += '/validated_builds/clang-x86_64-darwin11-R.tar.gz'
     f.addStep(buildbot.steps.shell.ShellCommand(
               name='download.artifacts',
               command=['curl', '-fvLo', 'host-compiler.tar.gz', latest_url],
               haltOnFailure=True, description=['download build artifacts'],
-              workdir=WithProperties('%(builddir)s')))
+              workdir=util.Property('builddir')))
     f.addStep(buildbot.steps.shell.ShellCommand(
               name='unzip', command=['tar', '-zxvf','../host-compiler.tar.gz'],
               haltOnFailure=True, description=['extract', 'host-compiler'],
@@ -179,9 +179,9 @@ def getPhaseBuilderFactory(config, phase, next_phase, stages):
     # Create the build factory.
     f = buildbot.process.factory.BuildFactory()
     f.addStep(buildbot.steps.shell.ShellCommand(
-              command=['echo', WithProperties('%(phase_id:-)s')]))
+              command=['echo', util.Interpolate('%(prop:phase_id:-)s')]))
     # constuct a new phase_id if phase_id is not already set
-    phaseid = WithProperties('%(get_phase_id)s',
+    phaseid = util.Interpolate('%(kw:get_phase_id)s',
                              get_phase_id = determine_phase_id)
     setProperty(f, 'phase_id', phaseid)
     setProperty(f, 'next_phase', next_phase)
@@ -192,18 +192,18 @@ def getPhaseBuilderFactory(config, phase, next_phase, stages):
                 extract_fn = _extract_changelist))
     # Buildbot uses got_revision instead of revision to identify builds.
     # We set it below so that the revision shows up in the html status pages.
-    setProperty(f, 'got_revision', WithProperties('%(revision)s'))
+    setProperty(f, 'got_revision', util.Property('revision'))
     # this generates URLs we can use to link back to the builder which
     # triggered downstream builds
     master_url = set_config_option('Master Options', 'master_url',
                                    'http://localhost')
-    this_str = '/'.join([master_url, 'builders', '%(buildername)s', 'builds',
-                        '%(buildnumber)s'])
-    setProperty(f, 'trigger', WithProperties(this_str))
+    this_str = '/'.join([master_url, 'builders', '%(prop:buildername)s', 'builds',
+                        '%(prop:buildnumber)s'])
+    setProperty(f, 'trigger', util.Interpolate(this_str))
     # Properties we always copy...
     copy_properties = [ 'phase_id', 'revision', 'got_revision', 'trigger' ]
     # Add the trigger for the next phase.
-    changes = WithProperties('%(forward_changes)s',
+    changes = util.Interpolate('%(kw:forward_changes)s',
                              forward_changes = _load_changelist)
     # Add the triggers for each stage...
     for i, (normal, experimental) in enumerate(stages):
@@ -234,7 +234,7 @@ def getPhaseBuilderFactory(config, phase, next_phase, stages):
     f.addStep(MasterShellCommand(
         name='trigger.next_phase', haltOnFailure = True,
         command = ['./process_changelist.py', next_phase,
-                   WithProperties('%(scheduler)s_changes.txt')],
+                   util.Interpolate('%(prop:scheduler)s_changes.txt')],
         description = ['Trigger', next_phase],
         descriptionDone = ['Trigger', next_phase]))
     # We have successfully sent the changes to the next phase, so it is  now
@@ -242,7 +242,7 @@ def getPhaseBuilderFactory(config, phase, next_phase, stages):
     # date.
     f.addStep(MasterShellCommand(
         name='clear.changelist', haltOnFailure = True,
-        command = ['rm', '-fv', WithProperties('%(scheduler)s_changes.txt')],
+        command = ['rm', '-fv', util.Interpolate('%(prop:scheduler)s_changes.txt')],
         description = ['Clear changelist'],
         descriptionDone = ['Clear changelist']))
     return f
@@ -271,7 +271,7 @@ def PublishGoodBuild(f=None, validated_build_dir='validated_builds',
         f = buildbot.process.factory.BuildFactory()
         # Buildbot uses got_revision instead of revision to identify builds.
         # We set it below so that the revision shows up in the html status pages.
-        setProperty(f, 'got_revision', WithProperties('%(revision)s'))
+        setProperty(f, 'got_revision', util.Property('revision'))
 
     f.addStep(MasterShellCommand(
             name='create.dir.validated_build_dir',
@@ -286,7 +286,7 @@ def PublishGoodBuild(f=None, validated_build_dir='validated_builds',
             buildname = build['name']
             project = _project_from_name(buildname)
             if project in ('clang', 'llvm-gcc', 'apple-clang'):
-                file_str = project + '-%(get_phase_id)s.tar.gz'
+                file_str = project + '-%(kw:get_phase_id)s.tar.gz'
                 link_str = os.path.join(artifacts_dir, buildname,
                                         file_str)
                 build_artifacts_dir = os.path.join(artifacts_dir, validated_build_dir,
@@ -296,7 +296,7 @@ def PublishGoodBuild(f=None, validated_build_dir='validated_builds',
                     name='Publish.Latest.' + buildname,
                     haltOnFailure=True,
                     command=['cp', '-v',
-                             WithProperties(link_str,
+                             util.Interpolate(link_str,
                                             get_phase_id=determine_phase_id),
                              os.path.join(artifacts_dir, validated_build_dir,
                                           "%s.tar.gz" % buildname)],
@@ -317,9 +317,9 @@ def PublishGoodBuild(f=None, validated_build_dir='validated_builds',
                     f.addStep(MasterShellCommand(
                         name='Publish.'+ buildname, haltOnFailure = True,
                         command = ['cp', '-v',
-                                   WithProperties(link_str,
+                                   util.Interpolate(link_str,
                                                   get_phase_id=determine_phase_id),
-                                   WithProperties(artifacts_str,
+                                   util.Interpolate(artifacts_str,
                                                   get_phase_id=determine_phase_id)],
                         description = ['publish', buildname]))
     return f
