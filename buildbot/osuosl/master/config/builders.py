@@ -2,8 +2,6 @@ from importlib import reload
 
 from buildbot.plugins import util
 
-from buildbot.process.properties import WithProperties
-
 from zorg.buildbot.builders import ClangBuilder
 from zorg.buildbot.builders import FlangBuilder
 from zorg.buildbot.builders import PollyBuilder
@@ -220,8 +218,8 @@ all = [
                         "-DDEFAULT_SYSROOT=C:/buildbot/.arm-ubuntu",
                         "-DZLIB_ROOT=C:/buildbot/.zlib-win32",
                         "-DLLVM_LIT_ARGS=-v -vv --threads=32",
-                        WithProperties("%(remote_test_host:+-DREMOTE_TEST_HOST=)s%(remote_test_host:-)s"),
-                        WithProperties("%(remote_test_user:+-DREMOTE_TEST_USER=)s%(remote_test_user:-)s"),
+                        util.Interpolate("%(prop:remote_test_host:+-DREMOTE_TEST_HOST=)s%(prop:remote_test_host:-)s"),
+                        util.Interpolate("%(prop:remote_test_user:+-DREMOTE_TEST_USER=)s%(prop:remote_test_user:-)s"),
                     ],
                     cmake_cache="../llvm-project/clang/cmake/caches/CrossWinToARMLinux.cmake")},
 
@@ -259,8 +257,8 @@ all = [
                         "-DDEFAULT_SYSROOT=C:/buildbot/.aarch64-ubuntu",
                         "-DZLIB_ROOT=C:/buildbot/.zlib-win32",
                         "-DLLVM_LIT_ARGS=-v -vv --threads=32",
-                        WithProperties("%(remote_test_host:+-DREMOTE_TEST_HOST=)s%(remote_test_host:-)s"),
-                        WithProperties("%(remote_test_user:+-DREMOTE_TEST_USER=)s%(remote_test_user:-)s"),
+                        util.Interpolate("%(prop:remote_test_host:+-DREMOTE_TEST_HOST=)s%(prop:remote_test_host:-)s"),
+                        util.Interpolate("%(prop:remote_test_user:+-DREMOTE_TEST_USER=)s%(prop:remote_test_user:-)s"),
                     ],
                     cmake_cache="../llvm-project/clang/cmake/caches/CrossWinToARMLinux.cmake")},
 
@@ -1224,7 +1222,7 @@ all = [
                         "-DTEST_SUITE_COLLECT_COMPILE_TIME=OFF",
                         "-DTEST_SUITE_COLLECT_STATS=OFF",
                         "-DTEST_SUITE_COLLECT_CODE_SIZE=OFF",
-                        WithProperties("-DTEST_SUITE_EXTERNALS_DIR=%(builddir)s/../../test-suite-externals"),
+                        util.Interpolate("-DTEST_SUITE_EXTERNALS_DIR=%(prop:builddir)s/../../test-suite-externals"),
                       ]
                     )},
 
