@@ -8,6 +8,8 @@ This is important when using buildbot's reload command.
 import os
 import sys
 
+from importlib import reload
+
 time_cache = {}
 
 def path_starts_with_one_of(path, paths):

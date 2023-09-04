@@ -8,6 +8,7 @@ from buildbot.steps.shell import SetProperty
 from buildbot.steps.shell import WithProperties
 from buildbot.steps.trigger import Trigger
 from datetime import datetime, date, time
+from importlib import reload
 
 import zorg
 
