@@ -63,7 +63,7 @@ class LLVMBuildFactory(BuildFactory):
 
         # Build the list of projects to enable.
         self.enable_projects = \
-            self.depends_on_projects.difference(self.enable_runtimes)
+            self.depends_on_projects.difference(_all_runtimes)
 
         # Directories.
         self.monorepo_dir = kwargs.pop('llvm_srcdir', None)
@@ -175,5 +175,5 @@ class LLVMBuildFactory(BuildFactory):
                 progress=True,
                 workdir=util.Interpolate(src_dir),
                 retryFetch=True,
-                clobberOnFailure=True,                
+                clobberOnFailure=True,
                 **kwargs))
