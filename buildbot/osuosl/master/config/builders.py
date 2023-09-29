@@ -2623,10 +2623,10 @@ all += [
                         "-DBUILD_SHARED_LIBS=ON",
                         "-DLLVM_OPTIMIZED_TABLEGEN=ON"],
                     env={
-                        'CCACHE_DIR' : WithProperties("%(builddir)s/ccache-db"),
+                        'CCACHE_DIR' : util.Interpolate("%(prop:builddir)s/ccache-db"),
                         # TMP/TEMP within the build dir (to utilize a ramdisk).
-                        'TMP'        : WithProperties("%(builddir)s/build"),
-                        'TEMP'       : WithProperties("%(builddir)s/build"),
+                        'TMP'        : util.Interpolate("%(prop:builddir)s/build"),
+                        'TEMP'       : util.Interpolate("%(prop:builddir)s/build"),
                     })},
 
     {'name' : "llvm-nvptx64-nvidia-ubuntu",
@@ -2648,10 +2648,10 @@ all += [
                         "-DBUILD_SHARED_LIBS=ON",
                         "-DLLVM_OPTIMIZED_TABLEGEN=ON"],
                     env={
-                        'CCACHE_DIR' : WithProperties("%(builddir)s/ccache-db"),
+                        'CCACHE_DIR' : util.Interpolate("%(prop:builddir)s/ccache-db"),
                         # TMP/TEMP within the build dir (to utilize a ramdisk).
-                        'TMP'        : WithProperties("%(builddir)s/build"),
-                        'TEMP'       : WithProperties("%(builddir)s/build"),
+                        'TMP'        : util.Interpolate("%(prop:builddir)s/build"),
+                        'TEMP'       : util.Interpolate("%(prop:builddir)s/build"),
                     })},
 
     {'name' : "llvm-nvptx-nvidia-win",
@@ -2671,10 +2671,10 @@ all += [
                         "-DLLVM_LIT_ARGS=-vv",
                         "-DLLVM_OPTIMIZED_TABLEGEN=ON"],
                     env={
-                        'CCACHE_DIR' : WithProperties("%(builddir)s/ccache-db"),
+                        'CCACHE_DIR' : util.Interpolate("%(prop:builddir)s/ccache-db"),
                         # TMP/TEMP within the build dir (to utilize a ramdisk).
-                        'TMP'        : WithProperties("%(builddir)s/build"),
-                        'TEMP'       : WithProperties("%(builddir)s/build"),
+                        'TMP'        : util.Interpolate("%(prop:builddir)s/build"),
+                        'TEMP'       : util.Interpolate("%(prop:builddir)s/build"),
                     })},
 
     {'name' : "llvm-nvptx64-nvidia-win",
@@ -2694,10 +2694,10 @@ all += [
                         "-DLLVM_LIT_ARGS=-vv",
                         "-DLLVM_OPTIMIZED_TABLEGEN=ON"],
                     env={
-                        'CCACHE_DIR' : WithProperties("%(builddir)s/ccache-db"),
+                        'CCACHE_DIR' : util.Interpolate("%(prop:builddir)s/ccache-db"),
                         # TMP/TEMP within the build dir (to utilize a ramdisk).
-                        'TMP'        : WithProperties("%(builddir)s/build"),
-                        'TEMP'       : WithProperties("%(builddir)s/build"),
+                        'TMP'        : util.Interpolate("%(prop:builddir)s/build"),
+                        'TEMP'       : util.Interpolate("%(prop:builddir)s/build"),
                     })},
 
     # flang FortranRuntime CUDA Offload builders.
@@ -2726,10 +2726,10 @@ all += [
                         "-DCMAKE_CUDA_ARCHITECTURES='50;60;70;80'",
                     ],
                     env={
-                        'CCACHE_DIR' : WithProperties("%(builddir)s/ccache-db"),
+                        'CCACHE_DIR' : util.Interpolate("%(prop:builddir)s/ccache-db"),
                         # TMP/TEMP within the build dir (to utilize a ramdisk).
-                        'TMP'        : WithProperties("%(builddir)s/build"),
-                        'TEMP'       : WithProperties("%(builddir)s/build"),
+                        'TMP'        : util.Interpolate("%(prop:builddir)s/build"),
+                        'TEMP'       : util.Interpolate("%(prop:builddir)s/build"),
                     })},
 
     {'name' : "flang-runtime-cuda-clang",
