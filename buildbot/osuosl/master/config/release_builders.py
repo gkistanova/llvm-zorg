@@ -63,7 +63,7 @@ all = [
                         "-DCMAKE_CXX_FLAGS=-U_GLIBCXX_DEBUG -Wno-misleading-indentation",
                         "-DLLVM_LIT_ARGS=-vv --time-tests"],
                     env={
-                        'CCACHE_DIR' : WithProperties("%(builddir)s/ccache-db"),
+                        'CCACHE_DIR' : util.Interpolate("%(prop:builddir)s/ccache-db"),
                     })},
 
     {'name' : "llvm-clang-x86_64-expensive-checks-win-release",
@@ -201,7 +201,7 @@ all = [
                         "-DLLVM_CCACHE_BUILD=ON",
                         '-DLLVM_ENABLE_WERROR=OFF'],
                     env={
-                        'CCACHE_DIR' : WithProperties("%(builddir)s/ccache-db"),
+                        'CCACHE_DIR' : util.Interpolate("%(prop:builddir)s/ccache-db"),
                     })},
 
 # LTO and ThinLTO builders.
