@@ -2298,21 +2298,39 @@ all += [
     'tags'  : ["flang"],
     'workernames' : ["linaro-flang-aarch64-out-of-tree"],
     'builddir': "flang-aarch64-out-of-tree",
-    'factory' : FlangBuilder.getFlangOutOfTreeBuildFactory(
-                    checks=[
-                        'check-flang'
+     'factory' : StagedBuilder.getCmakeBuildFactory(
+                    clean=False,
+                    stages=[
+                        dict(
+                            name="clang",
+                            depends_on_projects=['llvm', 'clang', 'mlir'],
+                            enable_runtimes="auto",
+                            cmake_definitions={
+                                "CMAKE_BUILD_TYPE"          : "Release",
+                                "LLVM_TARGETS_TO_BUILD"     : "AArch64",
+                                "CMAKE_CXX_STANDARD"        : "17",
+                                "LLVM_ENABLE_WERROR"        : "OFF",
+                                "LLVM_ENABLE_ASSERTIONS"    : "ON",
+                            },
+                        ),
+                        dict(
+                            name="flang",
+                            depends_on_projects=['flang'],
+                            enable_runtimes="auto",
+                            cmake_definitions={
+                                "CMAKE_BUILD_TYPE"          : "Release",
+                                "FLANG_ENABLE_WERROR"       : "ON",
+                                # Add LLVM_DIR and MLIR_DIR to the CMake invocation.
+                                # We actually need the paths to be relative to the source directory,
+                                # otherwise find_package can't locate the config files.
+                                "LLVM_DIR:PATH"             : util.Interpolate("../../../%(prop:objrootdir)s/clang/lib/cmake/llvm"),
+                                "MLIR_DIR:PATH"             : util.Interpolate("../../../%(prop:objrootdir)s/clang/lib/cmake/mlir"),
+                                "CLANG_DIR:PATH"            : util.Interpolate("../../../%(prop:objrootdir)s/clang/lib/cmake/clang"),
+                            },
+                            src_to_build_dir="flang",
+                            checks=["check-flang"],
+                        ),
                     ],
-                    llvm_extra_configure_args=[
-                        "-DLLVM_TARGETS_TO_BUILD=AArch64",
-                        "-DCMAKE_CXX_STANDARD=17",
-                        "-DLLVM_ENABLE_WERROR=OFF",
-                        "-DLLVM_ENABLE_ASSERTIONS=ON",
-                        "-DCMAKE_BUILD_TYPE=Release",
-                    ],
-                    flang_extra_configure_args=[
-                        "-DFLANG_ENABLE_WERROR=ON",
-                        "-DCMAKE_BUILD_TYPE=Release",
-                    ]
                 )},
 
     {'name' : "flang-aarch64-debug-reverse-iteration",
