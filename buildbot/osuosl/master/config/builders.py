@@ -716,7 +716,8 @@ all = [
     'tags'  : ["clang", "ppc"],
     'workernames' : ["ppc64be-clang-test-suite"],
     'builddir': "clang-ppc64be-test-suite",
-    'factory' : TestSuiteBuilder.getTestSuiteBuildFactory(
+    'factory' : UnifiedTreeBuilder.getCmakeExBuildFactory(
+                    clean=False,
                     depends_on_projects=[
                         "llvm", "clang", "clang-tools-extra",
                         "compiler-rt"
@@ -725,12 +726,16 @@ all = [
                         'check-all',
                         'check-runtimes'
                     ],
-                    extra_configure_args=[
-                        "-DLLVM_ENABLE_ASSERTIONS=ON",
-                        "-DCMAKE_BUILD_TYPE=Release",
-                        "-DLLVM_LIT_ARGS=-v",
-                        "-DLLVM_CCACHE_BUILD=ON"
-                    ]
+                    cmake_definitions={
+                        "LLVM_ENABLE_ASSERTIONS"        : "ON",
+                        "CMAKE_BUILD_TYPE"              : "Release",
+                        "LLVM_LIT_ARGS"                 : "-v",
+                        "LLVM_CCACHE_BUILD"             : "ON",
+                    },
+                    pre_install_steps=TestSuiteBuilder.getTestSuiteSteps(
+                        compiler_dir=util.Interpolate("%(prop:builddir)s/%(prop:objdir)s"),
+                        lit_args=["-v"],
+                    ),
                 )},
 
     {'name' : "clang-ppc64be-linux-multistage",
@@ -757,7 +762,8 @@ all = [
     'tags'  : ["clang", "ppc", "ppc64le"],
     'workernames' : ["ppc64le-clang-test-suite"],
     'builddir': "clang-ppc64le-test-suite",
-    'factory' : TestSuiteBuilder.getTestSuiteBuildFactory(
+    'factory' : UnifiedTreeBuilder.getCmakeExBuildFactory(
+                    clean=False,
                     depends_on_projects=[
                         "llvm", "clang", "clang-tools-extra",
                         "compiler-rt"
@@ -766,12 +772,16 @@ all = [
                         'check-all',
                         'check-runtimes'
                     ],
-                    extra_configure_args=[
-                        "-DLLVM_ENABLE_ASSERTIONS=ON",
-                        "-DCMAKE_BUILD_TYPE=Release",
-                        "-DLLVM_LIT_ARGS=-v",
-                        "-DLLVM_CCACHE_BUILD=ON"
-                    ]
+                    cmake_definitions={
+                        "LLVM_ENABLE_ASSERTIONS"        : "ON",
+                        "CMAKE_BUILD_TYPE"              : "Release",
+                        "LLVM_LIT_ARGS"                 : "-v",
+                        "LLVM_CCACHE_BUILD"             : "ON",
+                    },
+                    pre_install_steps=TestSuiteBuilder.getTestSuiteSteps(
+                        compiler_dir=util.Interpolate("%(prop:builddir)s/%(prop:objdir)s"),
+                        lit_args=["-v"],
+                    ),
                 )},
 
     {'name' : "clang-ppc64le-linux-multistage",
@@ -799,48 +809,63 @@ all = [
     'tags'  : ["clang", "ppc", "ppc64le"],
     'workernames' : ["ppc64le-clang-rhel-test"],
     'builddir': "clang-ppc64le-rhel",
-    'factory' : TestSuiteBuilder.getTestSuiteBuildFactory(
+    'factory' : UnifiedTreeBuilder.getCmakeExBuildFactory(
+                    clean=False,
                     depends_on_projects=[
                         "llvm", "clang", "clang-tools-extra",
-                        "lld", "compiler-rt"
+                        "compiler-rt"
                     ],
                     checks=[
                         'check-all',
                         'check-runtimes'
                     ],
-                    extra_configure_args=[
-                        "-DLLVM_ENABLE_ASSERTIONS=On",
-                        "-DCMAKE_C_COMPILER=clang",
-                        "-DCMAKE_CXX_COMPILER=clang++",
-                        "-DCLANG_DEFAULT_LINKER=lld",
-                        "-DLLVM_TOOL_GOLD_BUILD=0",
-                        "-DCMAKE_C_COMPILER_EXTERNAL_TOOLCHAIN:PATH=/usr",
-                        "-DCMAKE_CXX_COMPILER_EXTERNAL_TOOLCHAIN:PATH=/usr",
-                        "-DLLVM_BINUTILS_INCDIR=/usr/include",
-                        "-DBUILD_SHARED_LIBS=ON", "-DLLVM_ENABLE_WERROR=ON",
-                        "-DCMAKE_BUILD_TYPE=Release",
-                        "-DLLVM_LIT_ARGS=-vj 20"
-                    ]
+                    cmake_definitions={
+                        "LLVM_ENABLE_ASSERTIONS"        : "ON",
+                        "CMAKE_C_COMPILER"              : "clang",
+                        "CMAKE_CXX_COMPILER"            : "clang++",
+                        "CLANG_DEFAULT_LINKER"          : "lld",
+                        "LLVM_TOOL_GOLD_BUILD"          : "0",
+                        "CMAKE_C_COMPILER_EXTERNAL_TOOLCHAIN:PATH"      : "/usr",
+                        "CMAKE_CXX_COMPILER_EXTERNAL_TOOLCHAIN:PATH"    : "/usr",
+                        "LLVM_BINUTILS_INCDIR"          : "/usr/include",
+                        "BUILD_SHARED_LIBS"             : "ON",
+                        "LLVM_ENABLE_WERROR"            : "ON",
+                        "CMAKE_BUILD_TYPE"              : "Release",
+                        "LLVM_LIT_ARGS"                 : "-vj 20",
+                    },
+                    pre_install_steps=TestSuiteBuilder.getTestSuiteSteps(
+                        compiler_dir=util.Interpolate("%(prop:builddir)s/%(prop:objdir)s"),
+                        lit_args=["-vj", "20"],
+                    ),
                 )},
 
     {'name' : "clang-ppc64-aix",
     'tags'  : ["clang", "aix", "ppc"],
     'workernames' : ["aix-ppc64"],
     'builddir': "clang-ppc64-aix",
-    'factory' : TestSuiteBuilder.getTestSuiteBuildFactory(
-                    depends_on_projects=["llvm", "clang", "compiler-rt"],
+    'factory' : UnifiedTreeBuilder.getCmakeExBuildFactory(
                     clean=False,
-                    extra_configure_args=[
-                        "-DLLVM_ENABLE_ASSERTIONS=On",
-                        "-DCMAKE_C_COMPILER=/usr/local/clang-15.0.0/bin/clang",
-                        "-DCMAKE_CXX_COMPILER=/usr/local/clang-15.0.0/bin/clang++",
-                        "-DPython3_EXECUTABLE:FILEPATH=/opt/freeware/bin/python3_64",
-                        "-DLLVM_ENABLE_ZLIB=OFF", "-DLLVM_APPEND_VC_REV=OFF",
-                        "-DLLVM_PARALLEL_LINK_JOBS=2",
-                        "-DLLVM_ENABLE_WERROR=ON"
-                    ]
+                    depends_on_projects=["llvm", "clang", "compiler-rt"],
+                    checks=[
+                        'check-all',
+                        'check-runtimes'
+                    ],
+                    cmake_definitions={
+                        "LLVM_ENABLE_ASSERTIONS"        : "ON",
+                        "CMAKE_C_COMPILER"              : "/usr/local/clang-15.0.0/bin/clang",
+                        "CMAKE_CXX_COMPILER"            : "/usr/local/clang-15.0.0/bin/clang++",
+                        "Python3_EXECUTABLE:FILEPATH"   : "/opt/freeware/bin/python3_64",
+                        "LLVM_ENABLE_ZLIB"              : "OFF",
+                        "LLVM_APPEND_VC_REV"            : "OFF",
+                        "LLVM_PARALLEL_LINK_JOBS"       : "2",
+                        "LLVM_ENABLE_WERROR"            : "ON",
+                    },
+                    pre_install_steps=TestSuiteBuilder.getTestSuiteSteps(
+                        compiler_dir=util.Interpolate("%(prop:builddir)s/%(prop:objdir)s"),
+                        lit_args=["-vj", "20"],
+                    ),
                 ),
-    'env' : {'OBJECT_MODE': '64'}},     #TODO:VV: check it: probably it should an argument of the build factory.
+    'env' : {'OBJECT_MODE': '64'}},
 
     {'name' : "clang-s390x-linux",
     'tags'  : ["clang"],
