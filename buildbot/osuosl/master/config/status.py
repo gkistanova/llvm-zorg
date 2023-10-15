@@ -73,8 +73,8 @@ def getReporters():
     r.extend([
         reporters.MailNotifier(
             fromaddr = status_email_fromaddr,
-            extraRecipients = status_email,
-            extraHeaders = {"Reply-To": status_email[0]}, # The first from the list.
+            extraRecipients = [status_email_fromaddr],
+            extraHeaders = {"Reply-To": status_email_fromaddr},
             lookup = "lab.llvm.org",
             # TODO: For debug purposes only. Remove later.
             dumpMailsToLog = True,
