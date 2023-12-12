@@ -1,11 +1,58 @@
 # TODO: Refactor to define a list of tuples, each of which describes a worker, then enumerate and create as data driven.
 
+from buildbot.config.errors import error
 from buildbot.plugins import worker
+
 import config
 
-def create_worker(name, *args, **kwargs):
-    password = config.options.get('Worker Passwords', name)
-    return worker.Worker(name, password=password, *args, **kwargs)
+def create_worker(name, group = None, *args, **kwargs):
+    """ Create a new worker.
+
+        If 'group' parameter is specified, the password for the worker will be retrieved
+        from the 'Worker Password' configuration section for this group name at first;
+        otherwise the password will be retrieved for the worker's name.
+
+        If there is no password for specified name or group the function will do the following:
+        * raise an error if 'Master Options\is_production' configuration option is set to True;
+          otherwise reject the worker.
+        * create a new worker with the "no_pass" password if 'Master Options\is_dev' configuration
+          option is set to True.
+
+        Also see: config/local.cfg
+
+        Parameters
+        ----------
+        name : str
+            The name of the worker.
+
+        group : str, optional
+            The name of the worker group (default is None).
+
+            This name is used to get a single password for a group of the workers
+            from the configuration file.
+    """
+
+    password_section = 'Worker Passwords'
+
+    assert name, "The worker name must be specified."
+    assert config.options.has_section(password_section), f"'{password_section}' section must be defined in local.cfg."
+    # 'no_group' is a dummy option and it cannot be present in the configuration.
+    assert not config.options.has_option(password_section, "no_group"), f"'{password_section}' section cannot contain the 'no_group' option."
+
+    is_prod = config.options.getboolean('Master Options', 'is_production', fallback=False)
+    is_dev = config.options.getboolean('Master Options', 'is_dev', fallback=False)
+    password_fallback = "no_pass" if is_dev else None
+
+    password = config.options.get(password_section, group or "no_group",
+                                  fallback=config.options.get(password_section, name,
+                                                              fallback=password_fallback))
+
+    if password is None:
+        error(f"no password has been configured for '{name}' worker. The worker will be rejected.",
+              always_raise=is_prod)
+        return None
+
+    return worker.Worker(name, password = password, *args, **kwargs)
 
 def get_all():
     return [
